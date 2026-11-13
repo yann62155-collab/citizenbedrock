@@ -91,6 +91,12 @@ public final class PacketFilter {
             if (RemapTables.isVanilla(id) || "floodgate".equals(id.getNamespace())) {
                 return packet;
             }
+            // Cinématiques : titre affiché à l'écran de la console à la place de la vidéo
+            List<Packet<?>> cinematic = fr.citizen.bedrock.forms.CinematicsBridge.translate(custom.payload());
+            if (cinematic != null) {
+                for (Packet<?> p : cinematic) runReentrant(() -> listener.send(p));
+                return null;
+            }
             // Parchemin /citizen : affiché en menu Bedrock au lieu de l'écran PC
             if (fr.citizen.bedrock.forms.CitizenHubBridge.OPEN_HUB.equals(id.toString()) && listener instanceof ServerGamePacketListenerImpl game) {
                 fr.citizen.bedrock.forms.CitizenHubBridge.open(game.player, custom.payload());
