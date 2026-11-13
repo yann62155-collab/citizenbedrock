@@ -26,6 +26,7 @@ public final class CinematicsBridge {
     public static List<Packet<?>> translate(CustomPacketPayload payload) {
         String type = payload.getClass().getName();
         if (type.equals(STOP)) {
+            fr.citizen.bedrock.web.CinemaPage.stopped();
             return List.of(new ClientboundClearTitlesPacket(true));
         }
         if (type.equals(OFFER)) {
@@ -33,11 +34,16 @@ public final class CinematicsBridge {
                 boolean play = (boolean) payload.getClass().getMethod("play").invoke(payload);
                 if (!play) return List.of();
                 String name = String.valueOf(payload.getClass().getMethod("name").invoke(payload));
+                String sha = String.valueOf(payload.getClass().getMethod("sha256").invoke(payload));
+                fr.citizen.bedrock.web.CinemaPage.started(sha, name);
                 String title = name.replaceAll("\\.[A-Za-z0-9]{2,4}$", "").replace('_', ' ');
                 return List.of(
                         new ClientboundSetTitlesAnimationPacket(20, 20 * 60 * 30, 20),
                         new ClientboundSetTitleTextPacket(Component.literal("§6§l" + title)),
-                        new ClientboundSetSubtitleTextPacket(Component.literal("§eCinématique en cours (visible sur PC)")));
+                        new ClientboundSetSubtitleTextPacket(Component.literal(
+                                fr.citizen.bedrock.BedrockConfig.VALUES.portWeb > 0
+                                        ? "§eÀ regarder sur : §f" + fr.citizen.bedrock.web.WebServer.address()
+                                        : "§eCinématique en cours (visible sur PC)")));
             } catch (ReflectiveOperationException | RuntimeException e) {
                 return List.of();
             }

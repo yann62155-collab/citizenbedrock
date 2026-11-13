@@ -53,6 +53,7 @@ public final class CitizenBedrock {
     private void onServerStarted(ServerStartedEvent event) {
         RemapTables.build();
         BridgeManager.start(event.getServer());
+        fr.citizen.bedrock.web.WebServer.start();
         if (SelfTest.ENABLED) {
             SelfTest.run(event.getServer());
         }
@@ -60,6 +61,7 @@ public final class CitizenBedrock {
 
     private void onServerStopping(ServerStoppingEvent event) {
         BridgeManager.stop();
+        fr.citizen.bedrock.web.WebServer.stop();
     }
 
     private void onRegisterCommands(RegisterCommandsEvent event) {

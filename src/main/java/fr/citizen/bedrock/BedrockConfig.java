@@ -32,6 +32,11 @@ public final class BedrockConfig {
         public int portWebrtc = 30079;
         /** Adresse publique annoncée aux consoles. */
         public String adressePublique = "mc312.boxtoplay.com";
+        /**
+         * Port TCP de la page web (cinématiques pour les joueurs console). Peut être le même numéro que
+         * Simple Voice Chat, qui n'utilise que l'UDP. 0 = désactivé.
+         */
+        public int portWeb = 30053;
         /** Mémoire maximale du pont, en Mo. */
         public int memoirePontMo = 512;
         /** Vérifier et télécharger les mises à jour de Geyser et ViaProxy à chaque démarrage. */
