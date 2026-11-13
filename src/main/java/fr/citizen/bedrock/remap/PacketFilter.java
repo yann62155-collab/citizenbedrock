@@ -120,12 +120,11 @@ public final class PacketFilter {
                     new ClientboundLevelChunkWithLightPacket(chunk, level.getChunkSource().getLightEngine(), null, null));
         }
 
-        // --- Entités moddées : cachées
+        // --- Entités moddées : remplacées par une créature vanilla (ou cachées si aucun équivalent)
         if (packet instanceof ClientboundAddEntityPacket add) {
             EntityType<?> type = add.getType();
             if (!RemapTables.isVanilla(BuiltInRegistries.ENTITY_TYPE.getKey(type))) {
-                session.hiddenEntities.add(add.getId());
-                return null;
+                return substitute(add, session, listener);
             }
             if (type == EntityType.FALLING_BLOCK) {
                 int data = RemapTables.remapBlockState(add.getData());
@@ -138,8 +137,16 @@ public final class PacketFilter {
             return packet;
         }
         if (packet instanceof ClientboundRemoveEntitiesPacket remove) {
+            List<java.util.UUID> profiles = new ArrayList<>();
             for (int id : remove.getEntityIds()) {
                 session.hiddenEntities.remove(id);
+                session.substitutedEntities.remove(id);
+                java.util.UUID profile = session.fakePlayers.remove(id);
+                if (profile != null) profiles.add(profile);
+            }
+            if (!profiles.isEmpty()) {
+                runReentrant(() -> listener.send(packet));
+                return new ClientboundPlayerInfoRemovePacket(profiles);
             }
             return packet;
         }
@@ -154,8 +161,11 @@ public final class PacketFilter {
             return packet;
         }
         if (packet instanceof ClientboundSetEntityDataPacket data) {
+            Integer maxId = session.substitutedEntities.get(data.id());
             List<SynchedEntityData.DataValue<?>> kept = new ArrayList<>();
             for (SynchedEntityData.DataValue<?> value : data.packedItems()) {
+                if (maxId != null && value.id() > maxId) continue;
+                if (maxId != null && value.id() == 15 && value.serializer() != net.minecraft.network.syncher.EntityDataSerializers.BYTE) continue;
                 if (NeoForgeRegistries.ENTITY_DATA_SERIALIZERS.getKey(value.serializer()) == null) {
                     kept.add(value);
                 }
@@ -230,6 +240,40 @@ public final class PacketFilter {
             return kept.size() == stats.stats().size() ? packet : new ClientboundAwardStatsPacket(kept);
         }
         return packet;
+    }
+
+    /** Remplace l'apparition d'une créature moddée par une créature vanilla ou un personnage. */
+    @Nullable
+    private static Packet<?> substitute(ClientboundAddEntityPacket add, BedrockSession session, ServerCommonPacketListenerImpl listener) {
+        if (!(listener instanceof ServerGamePacketListenerImpl game)) {
+            session.hiddenEntities.add(add.getId());
+            return null;
+        }
+        net.minecraft.world.entity.Entity entity = game.player.serverLevel().getEntity(add.getId());
+        EntityType<?> target = entity == null ? null : EntitySubstitutes.choose(entity);
+        if (target == null) {
+            session.hiddenEntities.add(add.getId());
+            return null;
+        }
+        session.substitutedEntities.put(add.getId(), EntitySubstitutes.maxSharedDataId(target));
+        if (target == EntityType.PLAYER) {
+            // Un personnage a besoin d'un profil (nom affiché au-dessus de la tête) avant d'apparaître.
+            String display = entity.getName().getString().replace('§', ' ').trim();
+            if (display.isEmpty()) display = "PNJ";
+            if (display.length() > 16) display = display.substring(0, 16);
+            com.mojang.authlib.GameProfile profile = new com.mojang.authlib.GameProfile(add.getUUID(), display);
+            ClientboundPlayerInfoUpdatePacket info = new ClientboundPlayerInfoUpdatePacket(
+                    java.util.EnumSet.of(ClientboundPlayerInfoUpdatePacket.Action.ADD_PLAYER,
+                            ClientboundPlayerInfoUpdatePacket.Action.UPDATE_LISTED), java.util.List.of());
+            ((fr.citizen.bedrock.mixin.PlayerInfoUpdatePacketAccessor) info).citizenbedrock$setEntries(java.util.List.of(
+                    new ClientboundPlayerInfoUpdatePacket.Entry(add.getUUID(), profile, false, 0,
+                            net.minecraft.world.level.GameType.SURVIVAL, null, null)));
+            session.fakePlayers.put(add.getId(), add.getUUID());
+            runReentrant(() -> listener.send(info));
+        }
+        return new ClientboundAddEntityPacket(add.getId(), add.getUUID(), add.getX(), add.getY(), add.getZ(),
+                add.getXRot(), add.getYRot(), target, 0,
+                new net.minecraft.world.phys.Vec3(add.getXa(), add.getYa(), add.getZa()), add.getYHeadRot());
     }
 
     @Nullable

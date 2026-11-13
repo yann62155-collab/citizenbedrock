@@ -57,6 +57,11 @@ public final class BedrockConfig {
         public Map<String, String> blocsForces = new LinkedHashMap<>();
         /** Correspondances forcées objet moddé -> objet vanilla, ex : "citizeneconomy:gold_coin": "minecraft:gold_nugget". */
         public Map<String, String> objetsForces = new LinkedHashMap<>();
+        /**
+         * Créature vanilla forcée pour une créature moddée, ex : "easy_npc:*": "minecraft:player",
+         * "iceandfire:fire_dragon": "minecraft:ravager", ou "cache" pour ne pas l'afficher.
+         */
+        public Map<String, String> entitesForcees = new LinkedHashMap<>(Map.of("easy_npc:*", "minecraft:player"));
         /** Message affiché quand un menu moddé n'est pas encore adapté. */
         public String messageMenuNonAdapte = "§6[Citizen Bedrock] §eCe menu n'est pas encore disponible sur console.";
     }
@@ -77,6 +82,7 @@ public final class BedrockConfig {
                 if (read != null) {
                     if (read.blocsForces == null) read.blocsForces = new LinkedHashMap<>();
                     if (read.objetsForces == null) read.objetsForces = new LinkedHashMap<>();
+                    if (read.entitesForcees == null) read.entitesForcees = new LinkedHashMap<>(Map.of("easy_npc:*", "minecraft:player"));
                     VALUES = read;
                 }
             }

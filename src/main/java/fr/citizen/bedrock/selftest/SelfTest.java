@@ -49,6 +49,7 @@ public final class SelfTest {
 
     private static DeferredBlock<Block> testBlock;
     private static DeferredItem<Item> testItem;
+    private static net.neoforged.neoforge.registries.DeferredHolder<net.minecraft.world.entity.EntityType<?>, net.minecraft.world.entity.EntityType<net.minecraft.world.entity.monster.Zombie>> testNpc;
 
     /** Canal moddé « obligatoire » : sans Citizen Bedrock, NeoForge refuserait les clients sans mods. */
     public record TestPayload() implements CustomPacketPayload {
@@ -70,6 +71,13 @@ public final class SelfTest {
         testBlock = blocks.registerSimpleBlock("test_block", BlockBehaviour.Properties.of().strength(1.0f));
         items.registerSimpleBlockItem(testBlock);
         testItem = items.registerSimpleItem("test_sword_like_item");
+        DeferredRegister<net.minecraft.world.entity.EntityType<?>> entities = DeferredRegister.create(net.minecraft.core.registries.Registries.ENTITY_TYPE, CitizenBedrock.MODID);
+        testNpc = entities.register("test_npc", () -> net.minecraft.world.entity.EntityType.Builder
+                .<net.minecraft.world.entity.monster.Zombie>of(net.minecraft.world.entity.monster.Zombie::new, net.minecraft.world.entity.MobCategory.MISC)
+                .sized(0.6f, 1.95f).build("test_npc"));
+        entities.register(modBus);
+        modBus.addListener(net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent.class,
+                event -> event.put(testNpc.get(), net.minecraft.world.entity.monster.Zombie.createAttributes().build()));
         blocks.register(modBus);
         items.register(modBus);
         // Étape de configuration qui ne se termine jamais sans client moddé (comme certains mods réels)
@@ -180,6 +188,13 @@ public final class SelfTest {
         server.submit(() -> {
             BlockPos spawn = server.overworld().getSharedSpawnPos();
             server.overworld().setBlockAndUpdate(spawn.above(2), testBlock.get().defaultBlockState());
+            net.minecraft.world.entity.monster.Zombie npc = testNpc.get().create(server.overworld());
+            if (npc != null) {
+                npc.setNoAi(true);
+                npc.setCustomName(net.minecraft.network.chat.Component.literal("Enzo"));
+                npc.moveTo(spawn.getX() + 2.5, spawn.getY() + 1, spawn.getZ() + 0.5);
+                server.overworld().addFreshEntity(npc);
+            }
         }).get(30, TimeUnit.SECONDS);
         UUID expected = new UUID(0L, Long.parseLong(data.xuid()));
         FakeBedrockClient client = new FakeBedrockClient("127.0.0.1", server.getPort(), encrypted, "Test Xbox");
@@ -194,6 +209,7 @@ public final class SelfTest {
         check(!result.encryptionRequested(), "pas de vérification Mojang pour le joueur console");
         check(result.chunks() > 0, "chunks reçus et convertis : " + result.chunks());
         check(result.disconnectReason() == null, "pas d'expulsion (" + result.disconnectReason() + ")");
+        check(result.summary().contains("play:0x3e"), "PNJ moddé affiché comme personnage (profil envoyé)");
         for (int i = 0; i < 20 && BedrockPlayers.isBedrock(expected); i++) {
             Thread.sleep(500);
         }

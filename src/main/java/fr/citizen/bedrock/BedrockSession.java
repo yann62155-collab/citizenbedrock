@@ -21,6 +21,10 @@ public final class BedrockSession {
     private final GameProfile profile;
     /** Entités moddées cachées à ce joueur (la console ne saurait pas les afficher). */
     public final IntSet hiddenEntities = IntSets.synchronize(new IntOpenHashSet());
+    /** Créatures moddées affichées sous une autre forme : id réseau -> dernier index de données autorisé. */
+    public final java.util.Map<Integer, Integer> substitutedEntities = new java.util.concurrent.ConcurrentHashMap<>();
+    /** Créatures affichées comme des personnages (joueurs factices) : id réseau -> UUID du profil. */
+    public final java.util.Map<Integer, UUID> fakePlayers = new java.util.concurrent.ConcurrentHashMap<>();
     /** Menus moddés fermés pour ce joueur. */
     public final IntSet hiddenContainers = IntSets.synchronize(new IntOpenHashSet());
 

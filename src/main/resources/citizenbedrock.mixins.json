@@ -22,7 +22,8 @@
     "MoveEntityPacketAccessor",
     "RotateHeadPacketAccessor",
     "EntityEventPacketAccessor",
-    "TagNetworkPayloadAccessor"
+    "TagNetworkPayloadAccessor",
+    "PlayerInfoUpdatePacketAccessor"
   ],
   "injectors": {
     "defaultRequire": 1
