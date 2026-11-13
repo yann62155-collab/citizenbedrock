@@ -1,0 +1,84 @@
+package fr.citizen.bedrock;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import net.neoforged.fml.loading.FMLPaths;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+/**
+ * Réglages de Citizen Bedrock, dans config/citizenbedrock/citizenbedrock.json.
+ * Le fichier est créé au premier démarrage ; on peut le modifier par FTP puis redémarrer le serveur.
+ */
+public final class BedrockConfig {
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
+
+    /** Valeurs actuelles (jamais null après load()). */
+    public static Values VALUES = new Values();
+
+    public static final class Values {
+        public String _aide = "Citizen Bedrock - redémarrer le serveur après modification. Les ports doivent être ouverts dans la gestion des ports BoxToPlay.";
+
+        /** Lancer le pont Bedrock (ViaProxy + Geyser) au démarrage du serveur. */
+        public boolean pontActive = true;
+        /** Port principal Bedrock (UDP + TCP) : c'est celui que les joueurs console tapent. */
+        public int portBedrock = 30040;
+        /** Second port (UDP) utilisé par la nouvelle connexion Bedrock (NetherNet / WebRTC). */
+        public int portWebrtc = 30079;
+        /** Adresse publique annoncée aux consoles. */
+        public String adressePublique = "mc312.boxtoplay.com";
+        /** Mémoire maximale du pont, en Mo. */
+        public int memoirePontMo = 512;
+        /** Vérifier et télécharger les mises à jour de Geyser et ViaProxy à chaque démarrage. */
+        public boolean miseAJourAuto = true;
+
+        /** Préfixe ajouté au pseudo des joueurs console (évite qu'un gamertag vole le pseudo d'un joueur PC). */
+        public String prefixePseudo = ".";
+        /** Texte affiché dans la liste des serveurs côté console. */
+        public String motd1 = "Citizen";
+        public String motd2 = "Serveur RP";
+
+        /** Objet affiché à la place d'un objet moddé inconnu. */
+        public String objetParDefaut = "minecraft:paper";
+        /** Bloc affiché à la place d'un bloc moddé plein inconnu (si aucune couleur ne correspond). */
+        public String blocParDefaut = "minecraft:stone";
+        /** Correspondances forcées bloc moddé -> bloc vanilla, ex : "create:andesite_casing": "minecraft:polished_andesite". */
+        public Map<String, String> blocsForces = new LinkedHashMap<>();
+        /** Correspondances forcées objet moddé -> objet vanilla, ex : "citizeneconomy:gold_coin": "minecraft:gold_nugget". */
+        public Map<String, String> objetsForces = new LinkedHashMap<>();
+        /** Message affiché quand un menu moddé n'est pas encore adapté. */
+        public String messageMenuNonAdapte = "§6[Citizen Bedrock] §eCe menu n'est pas encore disponible sur console.";
+    }
+
+    private BedrockConfig() {
+    }
+
+    public static Path folder() {
+        return FMLPaths.CONFIGDIR.get().resolve(CitizenBedrock.MODID);
+    }
+
+    public static void load() {
+        Path file = folder().resolve("citizenbedrock.json");
+        try {
+            Files.createDirectories(folder());
+            if (Files.exists(file)) {
+                Values read = GSON.fromJson(Files.readString(file, StandardCharsets.UTF_8), Values.class);
+                if (read != null) {
+                    if (read.blocsForces == null) read.blocsForces = new LinkedHashMap<>();
+                    if (read.objetsForces == null) read.objetsForces = new LinkedHashMap<>();
+                    VALUES = read;
+                }
+            }
+            // Réécrit le fichier pour y ajouter les nouvelles options éventuelles.
+            Files.writeString(file, GSON.toJson(VALUES), StandardCharsets.UTF_8);
+        } catch (IOException | RuntimeException e) {
+            CitizenBedrock.LOGGER.error("[Citizen Bedrock] Impossible de lire {} : réglages par défaut utilisés.", file, e);
+            VALUES = new Values();
+        }
+    }
+}

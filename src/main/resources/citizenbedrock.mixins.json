@@ -1,0 +1,28 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "fr.citizen.bedrock.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "ClientIntentionPacketMixin",
+    "ServerHandshakePacketListenerImplMixin",
+    "ServerLoginPacketListenerImplMixin",
+    "NetworkRegistryMixin",
+    "CheckExtensibleEnumsMixin",
+    "CheckFeatureFlagsMixin",
+    "ServerCommonPacketListenerImplMixin",
+    "ServerGamePacketListenerImplMixin",
+    "PacketEncoderMixin",
+    "IdMapperMixin",
+    "MappedRegistryMixin",
+    "PalettedContainerMixin",
+    "ItemStackStreamCodecMixin",
+    "MoveEntityPacketAccessor",
+    "RotateHeadPacketAccessor",
+    "EntityEventPacketAccessor",
+    "TagNetworkPayloadAccessor"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

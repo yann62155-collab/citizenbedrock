@@ -1,0 +1,31 @@
+modLoader = "javafml"
+loaderVersion = "[4,)"
+license = "MIT"
+
+[[mods]]
+modId = "citizenbedrock"
+version = "${version}"
+displayName = "Citizen Bedrock"
+authors = "Ishawakiii"
+description = '''
+Permet aux joueurs Bedrock (Xbox, PlayStation, Switch, mobile, Windows) de rejoindre le serveur Citizen.
+Mod uniquement serveur : ne pas l'envoyer aux joueurs PC.
+'''
+displayTest = "IGNORE_SERVER_VERSION"
+
+[[mixins]]
+config = "citizenbedrock.mixins.json"
+
+[[dependencies.citizenbedrock]]
+modId = "neoforge"
+type = "required"
+versionRange = "[21.1.215,)"
+ordering = "NONE"
+side = "SERVER"
+
+[[dependencies.citizenbedrock]]
+modId = "minecraft"
+type = "required"
+versionRange = "[1.21.1,1.21.2)"
+ordering = "NONE"
+side = "SERVER"
