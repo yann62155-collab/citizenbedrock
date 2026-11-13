@@ -38,7 +38,7 @@ public final class EntitySubstitutes {
             }
         }
         if (!(entity instanceof LivingEntity)) {
-            return null;
+            return carcassType(entity);
         }
         String name = (key.toString() + " " + entity.getClass().getName()).toLowerCase(Locale.ROOT);
         float width = entity.getBbWidth();
@@ -75,10 +75,46 @@ public final class EntitySubstitutes {
     }
 
     /**
+     * Carcasses (mod citizenchasse) : affichées comme l'animal chassé, immobile.
+     * Le clic droit dessus arrive bien au serveur, donc on peut les ramasser comme sur PC.
+     */
+    @Nullable
+    private static EntityType<?> carcassType(Entity entity) {
+        try {
+            java.lang.reflect.Method getCarcass = entity.getClass().getMethod("getCarcass");
+            Object data = getCarcass.invoke(entity);
+            if (data == null) return EntityType.PIG;
+            Object opt = data.getClass().getMethod("type").invoke(data);
+            if (opt instanceof java.util.Optional<?> o && o.isPresent() && o.get() instanceof EntityType<?> type) {
+                if (RemapTables.isVanilla(BuiltInRegistries.ENTITY_TYPE.getKey(type))) return type;
+            }
+            return EntityType.PIG;
+        } catch (ReflectiveOperationException | RuntimeException e) {
+            return null; // autre entité non vivante (projectile, effet...) : pas d'équivalent sûr
+        }
+    }
+
+    /** Nom affiché au-dessus d'une carcasse, ou null. */
+    @Nullable
+    public static String carcassLabel(Entity entity) {
+        try {
+            Object data = entity.getClass().getMethod("getCarcass").invoke(entity);
+            if (data == null) return "Carcasse";
+            Object species = data.getClass().getMethod("speciesName").invoke(data);
+            float weight = (float) data.getClass().getMethod("weight").invoke(data);
+            String name = species instanceof net.minecraft.network.chat.Component c ? c.getString() : "animal";
+            return String.format(Locale.ROOT, "Carcasse de %s (%.1f kg)", name, weight);
+        } catch (ReflectiveOperationException | RuntimeException e) {
+            return null;
+        }
+    }
+
+    /**
      * Dernier index de données d'entité commun au type moddé et au substitut :
      * Entity (0-7) + LivingEntity (8-14) + Mob (15). Le joueur n'a pas l'index 15 de Mob.
      */
-    public static int maxSharedDataId(EntityType<?> substitute) {
+    public static int maxSharedDataId(Entity original, EntityType<?> substitute) {
+        if (!(original instanceof LivingEntity)) return 7; // seulement les données communes à toutes les entités
         return substitute == EntityType.PLAYER ? 14 : 15;
     }
 }

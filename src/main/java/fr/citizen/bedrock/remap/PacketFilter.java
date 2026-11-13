@@ -274,7 +274,7 @@ public final class PacketFilter {
             session.hiddenEntities.add(add.getId());
             return null;
         }
-        session.substitutedEntities.put(add.getId(), EntitySubstitutes.maxSharedDataId(target));
+        session.substitutedEntities.put(add.getId(), EntitySubstitutes.maxSharedDataId(entity, target));
         if (target == EntityType.PLAYER) {
             // Un personnage a besoin d'un profil (nom affiché au-dessus de la tête) avant d'apparaître.
             String display = entity.getName().getString().replace('§', ' ').trim();
@@ -290,9 +290,19 @@ public final class PacketFilter {
             session.fakePlayers.put(add.getId(), add.getUUID());
             runReentrant(() -> listener.send(info));
         }
-        return new ClientboundAddEntityPacket(add.getId(), add.getUUID(), add.getX(), add.getY(), add.getZ(),
+        ClientboundAddEntityPacket replaced = new ClientboundAddEntityPacket(add.getId(), add.getUUID(), add.getX(), add.getY(), add.getZ(),
                 add.getXRot(), add.getYRot(), target, 0,
                 new net.minecraft.world.phys.Vec3(add.getXa(), add.getYa(), add.getZa()), add.getYHeadRot());
+        String carcass = EntitySubstitutes.carcassLabel(entity);
+        if (carcass != null) {
+            // Nom visible au-dessus de la carcasse, envoyé juste après son apparition
+            ClientboundSetEntityDataPacket label = new ClientboundSetEntityDataPacket(add.getId(), List.of(
+                    new SynchedEntityData.DataValue<>(2, net.minecraft.network.syncher.EntityDataSerializers.OPTIONAL_COMPONENT,
+                            java.util.Optional.of(net.minecraft.network.chat.Component.literal(carcass))),
+                    new SynchedEntityData.DataValue<>(3, net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN, true)));
+            game.player.server.execute(() -> runReentrant(() -> listener.send(label)));
+        }
+        return replaced;
     }
 
     @Nullable
