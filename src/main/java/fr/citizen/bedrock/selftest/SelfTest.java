@@ -192,16 +192,18 @@ public final class SelfTest {
             BedrockContext.forceAny(false);
         }
 
-        // Page web des cinématiques
-        try (java.net.Socket web = new java.net.Socket("127.0.0.1", fr.citizen.bedrock.BedrockConfig.VALUES.portWeb)) {
-            web.getOutputStream().write("GET /status HTTP/1.1\r\nHost: test\r\n\r\n".getBytes(java.nio.charset.StandardCharsets.UTF_8));
-            String reply = new String(web.getInputStream().readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
-            check(reply.startsWith("HTTP/1.1 200") && reply.contains("\"playing\":false"), "page web des cinématiques en ligne");
-        }
-        try (java.net.Socket web = new java.net.Socket("127.0.0.1", fr.citizen.bedrock.BedrockConfig.VALUES.portWeb)) {
-            web.getOutputStream().write("GET / HTTP/1.1\r\nHost: test\r\n\r\n".getBytes(java.nio.charset.StandardCharsets.UTF_8));
-            String reply = new String(web.getInputStream().readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
-            check(reply.contains("Cinématiques du Royaume"), "page web servie");
+        // Page web des cinématiques (désactivée pour l'instant : port 30053 pris par Citizen Voix)
+        if (fr.citizen.bedrock.BedrockConfig.VALUES.portWeb > 0) {
+            try (java.net.Socket web = new java.net.Socket("127.0.0.1", fr.citizen.bedrock.BedrockConfig.VALUES.portWeb)) {
+                web.getOutputStream().write("GET /status HTTP/1.1\r\nHost: test\r\n\r\n".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                String reply = new String(web.getInputStream().readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+                check(reply.startsWith("HTTP/1.1 200") && reply.contains("\"playing\":false"), "page web des cinématiques en ligne");
+            }
+            try (java.net.Socket web = new java.net.Socket("127.0.0.1", fr.citizen.bedrock.BedrockConfig.VALUES.portWeb)) {
+                web.getOutputStream().write("GET / HTTP/1.1\r\nHost: test\r\n\r\n".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                String reply = new String(web.getInputStream().readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+                check(reply.contains("Cinématiques du Royaume"), "page web servie");
+            }
         }
 
         // 4. Connexion d'un faux joueur console sur le vrai serveur (poignée de main, login, configuration, jeu)
