@@ -185,28 +185,36 @@ public final class PacketFilter {
             return isVanillaHolder(effect.effect()) ? packet : null;
         }
 
-        // --- Menus moddés : pas encore adaptés, on les ferme proprement
+        // --- Menus moddés : affichés comme un coffre de la bonne taille
         if (packet instanceof ClientboundOpenScreenPacket open) {
+            session.containerMappings.remove(open.getContainerId());
+            session.hiddenContainers.remove(open.getContainerId());
             if (RemapTables.isVanilla(BuiltInRegistries.MENU.getKey(open.getType()))) {
-                session.hiddenContainers.remove(open.getContainerId());
                 return packet;
             }
-            session.hiddenContainers.add(open.getContainerId());
             if (listener instanceof ServerGamePacketListenerImpl game) {
-                ServerPlayer player = game.player;
-                player.server.execute(() -> {
-                    if (player.containerMenu.containerId == open.getContainerId()) {
-                        player.closeContainer();
-                    }
-                    player.sendSystemMessage(Component.literal(BedrockConfig.VALUES.messageMenuNonAdapte));
-                });
+                ContainerBridge.scheduleOpen(game.player, session, open);
             }
             return null;
         }
-        if (packet instanceof ClientboundContainerSetContentPacket p && session.hiddenContainers.contains(p.getContainerId())) return null;
-        if (packet instanceof ClientboundContainerSetSlotPacket p && session.hiddenContainers.contains(p.getContainerId())) return null;
-        if (packet instanceof ClientboundContainerSetDataPacket p && session.hiddenContainers.contains(p.getContainerId())) return null;
+        if (packet instanceof ClientboundContainerSetContentPacket p) {
+            if (session.hiddenContainers.contains(p.getContainerId()) || session.pendingContainers.contains(p.getContainerId())) return null;
+            ContainerBridge.Mapping m = session.containerMappings.get(p.getContainerId());
+            return m == null ? packet : ContainerBridge.content(m, p);
+        }
+        if (packet instanceof ClientboundContainerSetSlotPacket p) {
+            if (session.hiddenContainers.contains(p.getContainerId()) || session.pendingContainers.contains(p.getContainerId())) return null;
+            ContainerBridge.Mapping m = session.containerMappings.get(p.getContainerId());
+            return m == null ? packet : ContainerBridge.slot(m, p);
+        }
+        if (packet instanceof ClientboundContainerSetDataPacket p) {
+            if (session.hiddenContainers.contains(p.getContainerId()) || session.pendingContainers.contains(p.getContainerId())
+                    || session.containerMappings.containsKey(p.getContainerId())) return null;
+            return packet;
+        }
         if (packet instanceof ClientboundContainerClosePacket p) {
+            session.containerMappings.remove(p.getContainerId());
+            session.pendingContainers.remove(p.getContainerId());
             if (session.hiddenContainers.remove(p.getContainerId())) return null;
             return packet;
         }

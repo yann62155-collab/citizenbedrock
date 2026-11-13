@@ -49,6 +49,7 @@ public final class SelfTest {
 
     private static DeferredBlock<Block> testBlock;
     private static DeferredItem<Item> testItem;
+    private static net.neoforged.neoforge.registries.DeferredHolder<net.minecraft.world.inventory.MenuType<?>, net.minecraft.world.inventory.MenuType<net.minecraft.world.inventory.ChestMenu>> testMenu;
     private static net.neoforged.neoforge.registries.DeferredHolder<net.minecraft.world.entity.EntityType<?>, net.minecraft.world.entity.EntityType<net.minecraft.world.entity.monster.Zombie>> testNpc;
 
     /** Canal moddé « obligatoire » : sans Citizen Bedrock, NeoForge refuserait les clients sans mods. */
@@ -78,6 +79,11 @@ public final class SelfTest {
                 .<net.minecraft.world.entity.monster.Zombie>of(net.minecraft.world.entity.monster.Zombie::new, net.minecraft.world.entity.MobCategory.MISC)
                 .sized(0.6f, 1.95f).build("test_npc"));
         entities.register(modBus);
+        DeferredRegister<net.minecraft.world.inventory.MenuType<?>> menus = DeferredRegister.create(net.minecraft.core.registries.Registries.MENU, CitizenBedrock.MODID);
+        testMenu = menus.register("test_machine", () -> new net.minecraft.world.inventory.MenuType<net.minecraft.world.inventory.ChestMenu>(
+                (id, inv) -> new net.minecraft.world.inventory.ChestMenu(testMenu.get(), id, inv, new net.minecraft.world.SimpleContainer(9), 1),
+                net.minecraft.world.flag.FeatureFlags.DEFAULT_FLAGS));
+        menus.register(modBus);
         modBus.addListener(net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent.class,
                 event -> event.put(testNpc.get(), net.minecraft.world.entity.monster.Zombie.createAttributes().build()));
         blocks.register(modBus);
@@ -206,6 +212,13 @@ public final class SelfTest {
                 player.server.execute(() -> fr.citizen.bedrock.forms.BedrockForms.simple("Test", "Menu de test")
                         .button("Premier").button("Second")
                         .onClick(i -> FORM_CLICK.set(i)).send(player));
+                player.server.execute(() -> {
+                    net.minecraft.world.SimpleContainer machine = new net.minecraft.world.SimpleContainer(9);
+                    machine.setItem(4, new ItemStack(Items.DIAMOND, 5));
+                    player.openMenu(new net.minecraft.world.SimpleMenuProvider((id, inv, p) ->
+                            new net.minecraft.world.inventory.ChestMenu(testMenu.get(), id, inv, machine, 1),
+                            net.minecraft.network.chat.Component.literal("Machine de test")));
+                });
                 // Un mod qui envoie des données sur son canal à un joueur console ne doit pas planter le serveur
                 PacketDistributor.sendToPlayer(player, new TestPayload());
             }
@@ -216,6 +229,7 @@ public final class SelfTest {
         check(result.disconnectReason() == null, "pas d'expulsion (" + result.disconnectReason() + ")");
         for (int i = 0; i < 20 && FORM_CLICK.get() < 0; i++) Thread.sleep(250);
         check(FORM_CLICK.get() == 1, "menu Bedrock envoyé et réponse reçue (bouton " + FORM_CLICK.get() + ")");
+        check(result.summary().contains("play:0x33"), "menu moddé affiché comme un coffre");
         check(result.summary().contains("play:0x3e"), "PNJ moddé affiché comme personnage (profil envoyé)");
         for (int i = 0; i < 20 && BedrockPlayers.isBedrock(expected); i++) {
             Thread.sleep(500);

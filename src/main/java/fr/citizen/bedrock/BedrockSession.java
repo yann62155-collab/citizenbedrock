@@ -25,6 +25,10 @@ public final class BedrockSession {
     public final java.util.Map<Integer, Integer> substitutedEntities = new java.util.concurrent.ConcurrentHashMap<>();
     /** Créatures affichées comme des personnages (joueurs factices) : id réseau -> UUID du profil. */
     public final java.util.Map<Integer, UUID> fakePlayers = new java.util.concurrent.ConcurrentHashMap<>();
+    /** Menus moddés affichés comme un coffre : id du menu -> correspondance des cases. */
+    public final java.util.Map<Integer, fr.citizen.bedrock.remap.ContainerBridge.Mapping> containerMappings = new java.util.concurrent.ConcurrentHashMap<>();
+    /** Menus moddés en cours d'ouverture (le coffre sera envoyé à la fin du tick). */
+    public final IntSet pendingContainers = IntSets.synchronize(new IntOpenHashSet());
     /** Menus moddés fermés pour ce joueur. */
     public final IntSet hiddenContainers = IntSets.synchronize(new IntOpenHashSet());
 
