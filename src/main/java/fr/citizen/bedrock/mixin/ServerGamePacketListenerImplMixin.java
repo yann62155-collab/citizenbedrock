@@ -41,6 +41,39 @@ public abstract class ServerGamePacketListenerImplMixin {
         return mapped;
     }
 
+    /**
+     * PNJ affichés en personnage : sur console, frapper le PNJ ouvre son dialogue (comme un clic droit),
+     * pour que ça marche aussi sur les écrans tactiles où le bouton « interagir » n'apparaît pas.
+     */
+    @org.spongepowered.asm.mixin.injection.ModifyVariable(method = "handleInteract", at = @At("HEAD"), argsOnly = true)
+    private net.minecraft.network.protocol.game.ServerboundInteractPacket citizenbedrock$npcClick(
+            net.minecraft.network.protocol.game.ServerboundInteractPacket packet) {
+        if (!player.server.isSameThread()) return packet;
+        BedrockSession session = BedrockSession.get(player.connection.getConnection());
+        if (session == null) return packet;
+        int id = ((InteractPacketAccessor) packet).citizenbedrock$entityId();
+        if (!session.fakePlayers.containsKey(id)) return packet;
+        boolean[] attack = {false};
+        packet.dispatch(new net.minecraft.network.protocol.game.ServerboundInteractPacket.Handler() {
+            @Override
+            public void onInteraction(net.minecraft.world.InteractionHand hand) {
+            }
+
+            @Override
+            public void onInteraction(net.minecraft.world.InteractionHand hand, net.minecraft.world.phys.Vec3 pos) {
+            }
+
+            @Override
+            public void onAttack() {
+                attack[0] = true;
+            }
+        });
+        net.minecraft.world.entity.Entity target = player.serverLevel().getEntity(id);
+        if (!attack[0] || target == null) return packet;
+        return net.minecraft.network.protocol.game.ServerboundInteractPacket.createInteractionPacket(target, false,
+                net.minecraft.world.InteractionHand.MAIN_HAND);
+    }
+
     @Inject(method = "handleSetCreativeModeSlot", at = @At("HEAD"), cancellable = true)
     private void citizenbedrock$protectModdedItems(ServerboundSetCreativeModeSlotPacket packet, CallbackInfo ci) {
         if (!player.server.isSameThread()) {

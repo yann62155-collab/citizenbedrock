@@ -64,6 +64,11 @@ public final class ContainerBridge {
             if (menu == null || menu.containerId != open.getContainerId()) {
                 return; // menu déjà fermé
             }
+            // Dialogue de PNJ Easy NPC : menu Bedrock avec le texte et les boutons du PNJ
+            if (fr.citizen.bedrock.forms.EasyNpcBridge.tryShow(player, menu)) {
+                session.hiddenContainers.add(menu.containerId);
+                return;
+            }
             Mapping mapping = build(player, menu);
             if (mapping == null) {
                 session.hiddenContainers.add(open.getContainerId());
