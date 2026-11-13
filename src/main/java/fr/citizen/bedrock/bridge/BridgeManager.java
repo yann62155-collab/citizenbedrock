@@ -150,6 +150,7 @@ public final class BridgeManager {
             } catch (InterruptedException e) {
                 break;
             } catch (Exception e) {
+                if (stopping) break; // arrêt normal du serveur : le flux du pont se ferme
                 lastError = e.getMessage() == null ? e.toString() : e.getMessage();
                 CitizenBedrock.LOGGER.error("[Citizen Bedrock] Problème avec le pont Bedrock : {}", lastError, e);
             }
