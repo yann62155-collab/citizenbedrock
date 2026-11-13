@@ -121,7 +121,7 @@ final class FakeBedrockClient {
                             return new Result(play, encryption, chunks, disconnect, seen.toString());
                         } else if (id == 0x2B) {
                             play = true;
-                            playUntil = System.currentTimeMillis() + 6000;
+                            playUntil = System.currentTimeMillis() + 9000;
                             Thread.ofVirtual().start(() -> {
                                 try {
                                     Thread.sleep(1500);
@@ -129,6 +129,18 @@ final class FakeBedrockClient {
                                 }
                                 onPlay.run();
                             });
+                        } else if (id == 0x19) {
+                            // Menu Bedrock (canal floodgate:form) : on répond « bouton 1 » comme le ferait Geyser
+                            String channel = readString(p);
+                            if (channel.equals("floodgate:form")) {
+                                byte[] data = p.readAllBytes();
+                                ByteArrayOutputStream r = new ByteArrayOutputStream();
+                                writeString(r, "floodgate:form");
+                                r.write(data[1]);
+                                r.write(data[2]);
+                                r.write("1".getBytes(StandardCharsets.UTF_8));
+                                send(out, 0x12, r.toByteArray());
+                            }
                         } else if (id == 0x27) {
                             chunks++;
                         } else if (id == 0x26) {

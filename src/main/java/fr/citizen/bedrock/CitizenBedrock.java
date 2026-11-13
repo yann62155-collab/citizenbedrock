@@ -35,6 +35,14 @@ public final class CitizenBedrock {
         if (SelfTest.ENABLED) {
             SelfTest.registerTestContent(modBus);
         }
+        modBus.addListener(net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent.class, event ->
+                event.registrar("1").optional().playBidirectional(
+                        fr.citizen.bedrock.forms.FormPayload.TYPE, fr.citizen.bedrock.forms.FormPayload.CODEC,
+                        (payload, context) -> {
+                            if (context.player() instanceof ServerPlayer sp) {
+                                fr.citizen.bedrock.forms.BedrockForms.handleResponse(sp, payload.data());
+                            }
+                        }));
         NeoForge.EVENT_BUS.addListener(this::onServerStarted);
         NeoForge.EVENT_BUS.addListener(this::onServerStopping);
         NeoForge.EVENT_BUS.addListener(this::onRegisterCommands);
@@ -71,5 +79,6 @@ public final class CitizenBedrock {
 
     private void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
         BedrockPlayers.remove(event.getEntity().getUUID());
+        fr.citizen.bedrock.forms.BedrockForms.forget(event.getEntity().getUUID());
     }
 }

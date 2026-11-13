@@ -62,6 +62,8 @@ public final class SelfTest {
         }
     }
 
+    private static final java.util.concurrent.atomic.AtomicInteger FORM_CLICK = new java.util.concurrent.atomic.AtomicInteger(-1);
+
     private SelfTest() {
     }
 
@@ -201,6 +203,9 @@ public final class SelfTest {
         FakeBedrockClient.Result result = client.connect(() -> {
             ServerPlayer player = server.getPlayerList().getPlayer(expected);
             if (player != null) {
+                player.server.execute(() -> fr.citizen.bedrock.forms.BedrockForms.simple("Test", "Menu de test")
+                        .button("Premier").button("Second")
+                        .onClick(i -> FORM_CLICK.set(i)).send(player));
                 // Un mod qui envoie des données sur son canal à un joueur console ne doit pas planter le serveur
                 PacketDistributor.sendToPlayer(player, new TestPayload());
             }
@@ -209,6 +214,8 @@ public final class SelfTest {
         check(!result.encryptionRequested(), "pas de vérification Mojang pour le joueur console");
         check(result.chunks() > 0, "chunks reçus et convertis : " + result.chunks());
         check(result.disconnectReason() == null, "pas d'expulsion (" + result.disconnectReason() + ")");
+        for (int i = 0; i < 20 && FORM_CLICK.get() < 0; i++) Thread.sleep(250);
+        check(FORM_CLICK.get() == 1, "menu Bedrock envoyé et réponse reçue (bouton " + FORM_CLICK.get() + ")");
         check(result.summary().contains("play:0x3e"), "PNJ moddé affiché comme personnage (profil envoyé)");
         for (int i = 0; i < 20 && BedrockPlayers.isBedrock(expected); i++) {
             Thread.sleep(500);

@@ -91,6 +91,11 @@ public final class PacketFilter {
             if (RemapTables.isVanilla(id) || "floodgate".equals(id.getNamespace())) {
                 return packet;
             }
+            // Parchemin /citizen : affiché en menu Bedrock au lieu de l'écran PC
+            if (fr.citizen.bedrock.forms.CitizenHubBridge.OPEN_HUB.equals(id.toString()) && listener instanceof ServerGamePacketListenerImpl game) {
+                fr.citizen.bedrock.forms.CitizenHubBridge.open(game.player, custom.payload());
+                return null;
+            }
             boolean allowed = NetworkRegistry.hasChannel((ICommonPacketListener) listener, id);
             return allowed ? packet : null;
         }
