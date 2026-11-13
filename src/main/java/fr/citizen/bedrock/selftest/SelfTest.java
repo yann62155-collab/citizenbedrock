@@ -72,6 +72,19 @@ public final class SelfTest {
         testItem = items.registerSimpleItem("test_sword_like_item");
         blocks.register(modBus);
         items.register(modBus);
+        // Étape de configuration qui ne se termine jamais sans client moddé (comme certains mods réels)
+        modBus.addListener(net.neoforged.neoforge.network.event.RegisterConfigurationTasksEvent.class, event ->
+                event.register(new net.neoforged.neoforge.network.configuration.ICustomConfigurationTask() {
+                    @Override
+                    public void run(java.util.function.Consumer<CustomPacketPayload> sender) {
+                        // attend une réponse qui ne viendra jamais
+                    }
+
+                    @Override
+                    public Type type() {
+                        return new Type(ResourceLocation.fromNamespaceAndPath(CitizenBedrock.MODID, "selftest_blocking_task"));
+                    }
+                }));
         modBus.addListener(RegisterPayloadHandlersEvent.class, event ->
                 event.registrar("1").playToClient(TestPayload.TYPE, TestPayload.CODEC, (payload, context) -> {
                 }));

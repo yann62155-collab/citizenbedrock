@@ -11,6 +11,8 @@
     "CheckExtensibleEnumsMixin",
     "CheckFeatureFlagsMixin",
     "ServerCommonPacketListenerImplMixin",
+    "ServerCommonPacketListenerImplAccessor",
+    "ServerConfigurationPacketListenerImplMixin",
     "ServerGamePacketListenerImplMixin",
     "PacketEncoderMixin",
     "IdMapperMixin",

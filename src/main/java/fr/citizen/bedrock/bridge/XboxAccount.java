@@ -113,6 +113,7 @@ final class XboxAccount {
                 "friend-sync:",
                 "  auto-friend: true",
                 "  initial-invite: true",
+                "suppress-session-update-message: true",
                 "config-version: 9",
                 "");
         Files.writeString(file, yml, StandardCharsets.UTF_8);
