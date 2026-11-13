@@ -192,6 +192,13 @@ public final class SelfTest {
             Thread.sleep(1000);
         }
         check(BridgeManager.state() == BridgeManager.State.PRET, "pont Bedrock prêt (" + BridgeManager.versions() + ")");
+
+        // 6. Le compte Xbox (onglet Amis) démarre et demande sa connexion Microsoft
+        deadline = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(3);
+        while (BridgeManager.xboxLoginCode().isEmpty() && System.currentTimeMillis() < deadline) {
+            Thread.sleep(1000);
+        }
+        check(!BridgeManager.xboxLoginCode().isEmpty(), "compte Xbox démarré, code de connexion affiché");
     }
 
     private static void checkSection(BedrockSession fake, boolean global) {

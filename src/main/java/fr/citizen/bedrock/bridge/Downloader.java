@@ -104,7 +104,7 @@ final class Downloader {
     }
 
     /** Module « compte Xbox » (MCXboxBroadcast) : le serveur apparaît dans l'onglet Amis des consoles. */
-    void ensureBroadcast(Path target, boolean checkUpdates) throws IOException, InterruptedException {
+    void ensureBroadcast(Path target, boolean checkUpdates, String assetName) throws IOException, InterruptedException {
         if (Files.exists(target) && !checkUpdates) return;
         try {
             JsonObject info = getJson(BROADCAST_INFO).getAsJsonObject();
@@ -115,12 +115,12 @@ final class Downloader {
             String url = null;
             for (JsonElement element : info.getAsJsonArray("assets")) {
                 JsonObject asset = element.getAsJsonObject();
-                if ("MCXboxBroadcastExtension.jar".equals(asset.get("name").getAsString())) {
+                if (assetName.equals(asset.get("name").getAsString())) {
                     url = asset.get("browser_download_url").getAsString();
                     break;
                 }
             }
-            if (url == null) throw new IOException("Aucun fichier MCXboxBroadcastExtension.jar dans la version " + tag);
+            if (url == null) throw new IOException("Aucun fichier " + assetName + " dans la version " + tag);
             CitizenBedrock.LOGGER.info("[Citizen Bedrock] Téléchargement du module compte Xbox (build {})...", tag);
             download(url, target, null);
             versions.setProperty("xboxbroadcast", tag);
