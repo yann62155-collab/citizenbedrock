@@ -37,6 +37,15 @@ public final class BedrockCommand {
                 + (BridgeManager.lastError().isEmpty() ? "" : " §c(" + BridgeManager.lastError() + ")")), false);
         source.sendSuccess(() -> Component.literal("§eAdresse console : §f" + cfg.adressePublique + " §eport §f" + cfg.portBedrock), false);
         source.sendSuccess(() -> Component.literal("§eVersions : §f" + BridgeManager.versions()), false);
+        if (cfg.compteXboxAmis) {
+            if (!BridgeManager.xboxLoginCode().isEmpty()) {
+                source.sendSuccess(() -> Component.literal("§eCompte Xbox : §cà connecter §e- va sur §fmicrosoft.com/link§e, code §f§l" + BridgeManager.xboxLoginCode()), false);
+            } else if (!BridgeManager.xboxAccount().isEmpty()) {
+                source.sendSuccess(() -> Component.literal("§eCompte Xbox (onglet Amis) : §a" + BridgeManager.xboxAccount()), false);
+            } else {
+                source.sendSuccess(() -> Component.literal("§eCompte Xbox : §7démarrage..."), false);
+            }
+        }
         int count = BedrockPlayers.all().size();
         source.sendSuccess(() -> Component.literal("§eJoueurs console connectés : §f" + count), false);
         for (BedrockSession session : BedrockPlayers.all()) {

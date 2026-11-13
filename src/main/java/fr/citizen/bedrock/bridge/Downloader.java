@@ -29,6 +29,7 @@ import java.util.Properties;
 final class Downloader {
     private static final String GEYSER_INFO = "https://download.geysermc.org/v2/projects/geyser/versions/latest/builds/latest";
     private static final String GEYSER_JAR = GEYSER_INFO + "/downloads/viaproxy";
+    private static final String BROADCAST_INFO = "https://api.github.com/repos/MCXboxBroadcast/Broadcaster/releases/latest";
     private static final String VIAPROXY_INFO = "https://api.github.com/repos/ViaVersion/ViaProxy/releases/latest";
 
     private final HttpClient http = HttpClient.newBuilder()
@@ -99,6 +100,34 @@ final class Downloader {
         } catch (IOException e) {
             if (!Files.exists(target)) throw e;
             CitizenBedrock.LOGGER.warn("[Citizen Bedrock] Vérification de mise à jour de ViaProxy impossible ({}), version actuelle conservée.", e.getMessage());
+        }
+    }
+
+    /** Module « compte Xbox » (MCXboxBroadcast) : le serveur apparaît dans l'onglet Amis des consoles. */
+    void ensureBroadcast(Path target, boolean checkUpdates) throws IOException, InterruptedException {
+        if (Files.exists(target) && !checkUpdates) return;
+        try {
+            JsonObject info = getJson(BROADCAST_INFO).getAsJsonObject();
+            String tag = info.get("tag_name").getAsString();
+            if (Files.exists(target) && tag.equals(versions.getProperty("xboxbroadcast"))) {
+                return;
+            }
+            String url = null;
+            for (JsonElement element : info.getAsJsonArray("assets")) {
+                JsonObject asset = element.getAsJsonObject();
+                if ("MCXboxBroadcastExtension.jar".equals(asset.get("name").getAsString())) {
+                    url = asset.get("browser_download_url").getAsString();
+                    break;
+                }
+            }
+            if (url == null) throw new IOException("Aucun fichier MCXboxBroadcastExtension.jar dans la version " + tag);
+            CitizenBedrock.LOGGER.info("[Citizen Bedrock] Téléchargement du module compte Xbox (build {})...", tag);
+            download(url, target, null);
+            versions.setProperty("xboxbroadcast", tag);
+            saveVersions();
+        } catch (IOException e) {
+            if (!Files.exists(target)) throw e;
+            CitizenBedrock.LOGGER.warn("[Citizen Bedrock] Vérification de mise à jour du module compte Xbox impossible ({}), version actuelle conservée.", e.getMessage());
         }
     }
 

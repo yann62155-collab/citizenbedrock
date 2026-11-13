@@ -19,6 +19,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Lance et surveille le pont Bedrock (ViaProxy + Geyser) dans un processus séparé.
@@ -36,6 +38,11 @@ public final class BridgeManager {
     private static volatile MinecraftServer server;
     private static Downloader downloader;
     private static boolean hookInstalled;
+    /** Code de connexion du compte Xbox à saisir sur microsoft.com/link (vide si déjà connecté). */
+    private static volatile String xboxLoginCode = "";
+    private static volatile String xboxAccount = "";
+    private static final Pattern LOGIN_CODE = Pattern.compile("enter the code ([A-Z0-9-]+)");
+    private static final Pattern AUTHENTICATED = Pattern.compile("Successfully authenticated as (.+?) \\(");
 
     private BridgeManager() {
     }
@@ -49,7 +56,16 @@ public final class BridgeManager {
     }
 
     public static String versions() {
-        return downloader == null ? "?" : "Geyser " + downloader.installed("geyser") + ", ViaProxy " + downloader.installed("viaproxy");
+        return downloader == null ? "?" : "Geyser " + downloader.installed("geyser") + ", ViaProxy " + downloader.installed("viaproxy")
+                + (BedrockConfig.VALUES.compteXboxAmis ? ", compte Xbox " + downloader.installed("xboxbroadcast") : "");
+    }
+
+    public static String xboxLoginCode() {
+        return xboxLoginCode;
+    }
+
+    public static String xboxAccount() {
+        return xboxAccount;
     }
 
     public static Path root() {
@@ -168,6 +184,19 @@ public final class BridgeManager {
         downloader.ensureViaProxy(viaProxyJar, cfg.miseAJourAuto);
         downloader.ensureGeyser(geyserJar, cfg.miseAJourAuto);
 
+        Path extensions = geyserFolder.resolve("extensions");
+        Path broadcastJar = extensions.resolve("MCXboxBroadcastExtension.jar");
+        if (cfg.compteXboxAmis) {
+            Files.createDirectories(extensions);
+            try {
+                downloader.ensureBroadcast(broadcastJar, cfg.miseAJourAuto);
+            } catch (IOException e) {
+                CitizenBedrock.LOGGER.warn("[Citizen Bedrock] Module compte Xbox indisponible ({}) : le pont démarre sans lui.", e.getMessage());
+            }
+        } else {
+            Files.deleteIfExists(broadcastJar);
+        }
+
         // Clé partagée : c'est elle qui prouve au serveur que la connexion vient bien du pont.
         FloodgateKey.get();
         Files.copy(FloodgateKey.file(), geyserFolder.resolve("key.pem"), StandardCopyOption.REPLACE_EXISTING);
@@ -235,11 +264,40 @@ public final class BridgeManager {
                     }
                 }
                 CitizenBedrock.LOGGER.info("[Pont] {}", clean);
+                watchXboxAccount(clean);
             }
         }
         int exit = p.waitFor();
         process = null;
         return exit;
+    }
+
+    /** Repère le code de connexion du compte Xbox et prévient les admins connectés. */
+    private static void watchXboxAccount(String line) {
+        Matcher code = LOGIN_CODE.matcher(line);
+        if (code.find()) {
+            xboxLoginCode = code.group(1);
+            String message = "§6[Citizen Bedrock] §eConnexion du compte Xbox du serveur : va sur §fmicrosoft.com/link§e et tape le code §f§l"
+                    + xboxLoginCode + "§e (avec un compte Microsoft dédié au serveur).";
+            CitizenBedrock.LOGGER.warn("[Citizen Bedrock] COMPTE XBOX : ouvre https://www.microsoft.com/link et tape le code {} pour connecter le compte du serveur.", xboxLoginCode);
+            notifyAdmins(message);
+            return;
+        }
+        Matcher auth = AUTHENTICATED.matcher(line);
+        if (auth.find()) {
+            xboxLoginCode = "";
+            xboxAccount = auth.group(1);
+            CitizenBedrock.LOGGER.info("[Citizen Bedrock] Compte Xbox du serveur connecté : {}. Les joueurs console doivent l'ajouter en ami.", xboxAccount);
+            notifyAdmins("§6[Citizen Bedrock] §aCompte Xbox connecté : §f" + xboxAccount + "§a. Les joueurs console l'ajoutent en ami puis rejoignent depuis l'onglet Amis.");
+        }
+    }
+
+    private static void notifyAdmins(String message) {
+        MinecraftServer s = server;
+        if (s == null) return;
+        s.execute(() -> s.getPlayerList().getPlayers().stream()
+                .filter(p -> s.getProfilePermissions(p.getGameProfile()) >= 3)
+                .forEach(p -> p.sendSystemMessage(net.minecraft.network.chat.Component.literal(message))));
     }
 
     private static int freeLocalPort() throws IOException {

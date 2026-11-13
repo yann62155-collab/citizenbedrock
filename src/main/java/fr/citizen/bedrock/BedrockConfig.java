@@ -37,6 +37,12 @@ public final class BedrockConfig {
         /** Vérifier et télécharger les mises à jour de Geyser et ViaProxy à chaque démarrage. */
         public boolean miseAJourAuto = true;
 
+        /**
+         * Compte Xbox du serveur (onglet Amis) : les joueurs console ajoutent ce compte en ami
+         * et rejoignent depuis l'onglet Amis de Minecraft, sans DNS ni appli. Utiliser un compte Microsoft dédié.
+         */
+        public boolean compteXboxAmis = true;
+
         /** Préfixe ajouté au pseudo des joueurs console (évite qu'un gamertag vole le pseudo d'un joueur PC). */
         public String prefixePseudo = ".";
         /** Texte affiché dans la liste des serveurs côté console. */
