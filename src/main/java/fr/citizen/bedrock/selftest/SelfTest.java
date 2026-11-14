@@ -193,13 +193,13 @@ public final class SelfTest {
         }
 
         // Page web des cinématiques (désactivée pour l'instant : port 30053 pris par Citizen Voix)
-        if (fr.citizen.bedrock.BedrockConfig.VALUES.portWeb > 0) {
-            try (java.net.Socket web = new java.net.Socket("127.0.0.1", fr.citizen.bedrock.BedrockConfig.VALUES.portWeb)) {
+        if (fr.citizen.bedrock.BedrockConfig.VALUES.portCinematiques > 0) {
+            try (java.net.Socket web = new java.net.Socket("127.0.0.1", fr.citizen.bedrock.BedrockConfig.VALUES.portCinematiques)) {
                 web.getOutputStream().write("GET /status HTTP/1.1\r\nHost: test\r\n\r\n".getBytes(java.nio.charset.StandardCharsets.UTF_8));
                 String reply = new String(web.getInputStream().readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
                 check(reply.startsWith("HTTP/1.1 200") && reply.contains("\"playing\":false"), "page web des cinématiques en ligne");
             }
-            try (java.net.Socket web = new java.net.Socket("127.0.0.1", fr.citizen.bedrock.BedrockConfig.VALUES.portWeb)) {
+            try (java.net.Socket web = new java.net.Socket("127.0.0.1", fr.citizen.bedrock.BedrockConfig.VALUES.portCinematiques)) {
                 web.getOutputStream().write("GET / HTTP/1.1\r\nHost: test\r\n\r\n".getBytes(java.nio.charset.StandardCharsets.UTF_8));
                 String reply = new String(web.getInputStream().readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
                 check(reply.contains("Cinématiques du Royaume"), "page web servie");

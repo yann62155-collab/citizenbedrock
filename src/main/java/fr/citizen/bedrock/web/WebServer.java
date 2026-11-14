@@ -27,13 +27,12 @@ public final class WebServer {
     }
 
     public static synchronized void start() {
-        int port = BedrockConfig.VALUES.portWeb;
+        int port = BedrockConfig.VALUES.portCinematiques;
         if (port <= 0 || socket != null) return;
-        if (net.neoforged.fml.ModList.get().isLoaded("citizenvoice") && port == 30053) {
-            // Le site de Citizen Voix utilise déjà ce port : la page des cinématiques a besoin d'un autre port.
-            CitizenBedrock.LOGGER.warn("[Citizen Bedrock] Page des cinématiques désactivée : le port 30053 est celui de Citizen Voix. "
-                    + "Réserve un autre port chez BoxToPlay et mets-le dans \"portWeb\" (config/citizenbedrock/citizenbedrock.json).");
-            return;
+        if (port == 30053 && net.neoforged.fml.ModList.get().isLoaded("citizenvoice")) {
+            CitizenBedrock.LOGGER.warn("[Citizen Bedrock] Le port 30053 est celui de Citizen Voix : page des cinématiques sur 30079.");
+            port = 30079;
+            BedrockConfig.VALUES.portCinematiques = port;
         }
         try {
             socket = new ServerSocket();
@@ -78,7 +77,7 @@ public final class WebServer {
     }
 
     public static String address() {
-        return BedrockConfig.VALUES.adressePublique + ":" + BedrockConfig.VALUES.portWeb;
+        return BedrockConfig.VALUES.adressePublique + ":" + BedrockConfig.VALUES.portCinematiques;
     }
 
     /** Requête HTTP/1.1 minimale : GET uniquement, une requête par connexion. */

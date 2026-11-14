@@ -33,10 +33,10 @@ public final class BedrockConfig {
         /** Adresse publique annoncée aux consoles. */
         public String adressePublique = "mc312.boxtoplay.com";
         /**
-         * Port TCP de la page web des cinématiques pour les joueurs console. 0 = désactivé.
-         * DÉSACTIVÉE pour l'instant : le port 30053 est utilisé par Citizen Voix (chat vocal).
+         * Port TCP de la page des cinématiques pour les joueurs console. 30079 est déjà réservé pour Bedrock,
+         * qui n'en utilise que l'UDP : la page prend le TCP du même numéro. (Le 30053 reste à Citizen Voix.) 0 = désactivée.
          */
-        public int portWeb = 0;
+        public int portCinematiques = 30079;
         /** Mémoire maximale du pont, en Mo. */
         public int memoirePontMo = 512;
         /** Vérifier et télécharger les mises à jour de Geyser et ViaProxy à chaque démarrage. */
@@ -91,8 +91,6 @@ public final class BedrockConfig {
                     VALUES = read;
                 }
             }
-            // Page web des cinématiques désactivée pour l'instant : 30053 appartient à Citizen Voix.
-            VALUES.portWeb = 0;
             // Réécrit le fichier pour y ajouter les nouvelles options éventuelles.
             Files.writeString(file, GSON.toJson(VALUES), StandardCharsets.UTF_8);
         } catch (IOException | RuntimeException e) {
