@@ -222,7 +222,7 @@ public final class SelfTest {
         // Plusieurs joueurs console en même temps (en plus du joueur principal)
         java.util.List<java.util.concurrent.CompletableFuture<FakeBedrockClient.Result>> others = new java.util.ArrayList<>();
         for (int k = 1; k <= 4; k++) {
-            String otherPlain = String.join("\0", "1.21.50", "Joueur " + k, "25354111111111" + (10 + k), "11", "fr_FR", "0", "3",
+            String otherPlain = String.join("\0", "1.21.50", "Joueur " + k, "25354222222222" + (10 + k), "11", "fr_FR", "0", "3",
                     "127.0.0.1", "null", "0", "-1", "null");
             String otherData = FloodgateCipher.encrypt(otherPlain, FloodgateKey.get());
             String otherName = "Joueur " + k;
