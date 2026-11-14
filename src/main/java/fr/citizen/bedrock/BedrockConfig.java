@@ -33,10 +33,10 @@ public final class BedrockConfig {
         /** Adresse publique annoncée aux consoles. */
         public String adressePublique = "mc312.boxtoplay.com";
         /**
-         * Port TCP de la page des cinématiques pour les joueurs console. 30079 est déjà réservé pour Bedrock,
-         * qui n'en utilise que l'UDP : la page prend le TCP du même numéro. (Le 30053 reste à Citizen Voix.) 0 = désactivée.
+         * Port TCP de la page des cinématiques pour les joueurs console (port réservé exprès chez BoxToPlay).
+         * Ne jamais mettre 30053 : c'est le port du site vocal (Citizen Voix). 0 = désactivée.
          */
-        public int portCinematiques = 30079;
+        public int portCinematiques = 30087;
         /** Mémoire maximale du pont, en Mo. */
         public int memoirePontMo = 512;
         /** Vérifier et télécharger les mises à jour de Geyser et ViaProxy à chaque démarrage. */

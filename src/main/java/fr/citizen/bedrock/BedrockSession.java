@@ -29,6 +29,8 @@ public final class BedrockSession {
     public final java.util.Map<Integer, fr.citizen.bedrock.remap.ContainerBridge.Mapping> containerMappings = new java.util.concurrent.ConcurrentHashMap<>();
     /** Menus moddés en cours d'ouverture (le coffre sera envoyé à la fin du tick). */
     public final IntSet pendingContainers = IntSets.synchronize(new IntOpenHashSet());
+    /** Action à proposer quand le joueur ferme certains menus (envoi de colis, machine à clés...). */
+    public final java.util.Map<Integer, Runnable> closeActions = new java.util.concurrent.ConcurrentHashMap<>();
     /** Menus moddés fermés pour ce joueur. */
     public final IntSet hiddenContainers = IntSets.synchronize(new IntOpenHashSet());
 

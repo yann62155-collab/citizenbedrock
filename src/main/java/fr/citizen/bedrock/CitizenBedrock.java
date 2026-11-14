@@ -47,6 +47,8 @@ public final class CitizenBedrock {
         NeoForge.EVENT_BUS.addListener(this::onServerStopping);
         NeoForge.EVENT_BUS.addListener(this::onRegisterCommands);
         NeoForge.EVENT_BUS.addListener(this::onLogin);
+        NeoForge.EVENT_BUS.addListener(this::onRightClickBlock);
+        NeoForge.EVENT_BUS.addListener(this::onRightClickItem);
         NeoForge.EVENT_BUS.addListener(this::onLogout);
     }
 
@@ -76,6 +78,30 @@ public final class CitizenBedrock {
                 LOGGER.info("[Citizen Bedrock] {} s'est connecté depuis {} (gamertag {}).",
                         player.getGameProfile().getName(), session.data().deviceName(), session.data().username());
             }
+        }
+    }
+
+    /** Affiches : sur PC le clic droit ouvre un écran côté jeu ; pour la console on ouvre un menu Bedrock. */
+    private void onRightClickBlock(net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.RightClickBlock event) {
+        if (!(event.getEntity() instanceof ServerPlayer player) || event.getHand() != net.minecraft.world.InteractionHand.MAIN_HAND) return;
+        if (!BedrockPlayers.isBedrock(player)) return;
+        var block = event.getLevel().getBlockState(event.getPos()).getBlock();
+        var id = net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(block);
+        if ("citizenaffiches".equals(id.getNamespace()) && player.isShiftKeyDown()) {
+            fr.citizen.bedrock.forms.CitizenModsBridge.editPoster(player, event.getPos());
+        }
+    }
+
+    /** Lettres du hibou : lire une lettre scellée, ou ouvrir la volière avec une lettre vierge. */
+    private void onRightClickItem(net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.RightClickItem event) {
+        if (!(event.getEntity() instanceof ServerPlayer player)) return;
+        if (!BedrockPlayers.isBedrock(player)) return;
+        var id = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(event.getItemStack().getItem());
+        if (!"hiboupostal".equals(id.getNamespace())) return;
+        if (id.getPath().equals("sealed_letter")) {
+            fr.citizen.bedrock.forms.CitizenModsBridge.readLetter(player, event.getItemStack());
+        } else if (id.getPath().equals("blank_letter")) {
+            fr.citizen.bedrock.forms.CitizenModsBridge.openOwlery(player);
         }
     }
 

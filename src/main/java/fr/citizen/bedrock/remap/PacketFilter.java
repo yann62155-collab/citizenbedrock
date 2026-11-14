@@ -97,6 +97,11 @@ public final class PacketFilter {
                 for (Packet<?> p : cinematic) runReentrant(() -> listener.send(p));
                 return null;
             }
+            // Écrans des mods Citizen (hibou, éclipses, /craft...)
+            if (listener instanceof ServerGamePacketListenerImpl citizenGame
+                    && fr.citizen.bedrock.forms.CitizenModsBridge.onPayload(citizenGame.player, custom.payload())) {
+                return null;
+            }
             // Citizen Economy : écrans et annonces convertis pour la console
             if (listener instanceof ServerGamePacketListenerImpl econ) {
                 if (fr.citizen.bedrock.forms.EconomyBridge.VIEW.equals(id.toString())) {

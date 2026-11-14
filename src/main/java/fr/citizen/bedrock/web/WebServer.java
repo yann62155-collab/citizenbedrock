@@ -30,9 +30,8 @@ public final class WebServer {
         int port = BedrockConfig.VALUES.portCinematiques;
         if (port <= 0 || socket != null) return;
         if (port == 30053 && net.neoforged.fml.ModList.get().isLoaded("citizenvoice")) {
-            CitizenBedrock.LOGGER.warn("[Citizen Bedrock] Le port 30053 est celui de Citizen Voix : page des cinématiques sur 30079.");
-            port = 30079;
-            BedrockConfig.VALUES.portCinematiques = port;
+            CitizenBedrock.LOGGER.warn("[Citizen Bedrock] Page des cinématiques NON lancée : 30053 est le port du site vocal. Mets un autre port dans \"portCinematiques\".");
+            return;
         }
         try {
             socket = new ServerSocket();

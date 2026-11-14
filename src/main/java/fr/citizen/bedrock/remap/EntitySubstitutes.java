@@ -40,6 +40,9 @@ public final class EntitySubstitutes {
         if (!(entity instanceof LivingEntity)) {
             return carcassType(entity);
         }
+        // Créature moddée qui hérite d'une créature vanilla (ex : zombie de l'ombre -> zombie)
+        EntityType<?> parent = vanillaParent(entity);
+        if (parent != null) return parent;
         String name = (key.toString() + " " + entity.getClass().getName()).toLowerCase(Locale.ROOT);
         float width = entity.getBbWidth();
         float height = entity.getBbHeight();
@@ -72,6 +75,50 @@ public final class EntitySubstitutes {
         if (width >= 3.0f) return EntityType.RAVAGER;
         if (height >= 1.5f) return EntityType.PLAYER;
         return EntityType.PIG;
+    }
+
+    private static final java.util.Map<Class<?>, EntityType<?>> VANILLA = new java.util.HashMap<>();
+
+    /** Première classe vanilla dans l'héritage de la créature, si elle correspond à un type connu. */
+    @Nullable
+    private static EntityType<?> vanillaParent(Entity entity) {
+        synchronized (VANILLA) {
+            if (VANILLA.isEmpty()) {
+                for (EntityType<?> type : BuiltInRegistries.ENTITY_TYPE) {
+                    if (!RemapTables.isVanilla(BuiltInRegistries.ENTITY_TYPE.getKey(type))) continue;
+                    Class<?> base = baseClassOf(type);
+                    if (base != null) VANILLA.putIfAbsent(base, type);
+                }
+            }
+        }
+        for (Class<?> c = entity.getClass().getSuperclass(); c != null && c != Object.class; c = c.getSuperclass()) {
+            if (!c.getName().startsWith("net.minecraft.")) continue;
+            EntityType<?> t = VANILLA.get(c);
+            if (t != null) return t;
+            return null; // première classe vanilla trouvée mais abstraite (Monster, Animal...) : règles par taille
+        }
+        return null;
+    }
+
+    /** Classe Java des créatures d'un type vanilla, déduite d'après son nom (zombie -> Zombie...). */
+    @Nullable
+    private static Class<?> baseClassOf(EntityType<?> type) {
+        String path = BuiltInRegistries.ENTITY_TYPE.getKey(type).getPath();
+        StringBuilder sb = new StringBuilder();
+        for (String part : path.split("_")) {
+            if (part.isEmpty()) continue;
+            sb.append(Character.toUpperCase(part.charAt(0))).append(part.substring(1));
+        }
+        String simple = sb.toString();
+        for (String pkg : new String[]{"monster", "animal", "npc", "animal.horse", "monster.piglin", "animal.camel",
+                "animal.frog", "animal.goat", "animal.allay", "animal.sniffer", "animal.axolotl", "animal.armadillo",
+                "monster.warden", "monster.breeze", "boss.wither", "boss.enderdragon", "ambient", "animal.horse"}) {
+            try {
+                return Class.forName("net.minecraft.world.entity." + pkg + "." + simple, false, Entity.class.getClassLoader());
+            } catch (ClassNotFoundException ignored) {
+            }
+        }
+        return null;
     }
 
     /**

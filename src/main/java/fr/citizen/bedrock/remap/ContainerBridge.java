@@ -69,6 +69,11 @@ public final class ContainerBridge {
                 session.hiddenContainers.add(menu.containerId);
                 return;
             }
+            // Menus Citizen remplacés par un menu Bedrock (établi de menuiserie...)
+            if (fr.citizen.bedrock.forms.CitizenModsBridge.replaceMenu(player, menu)) {
+                session.hiddenContainers.add(menu.containerId);
+                return;
+            }
             Mapping mapping = build(player, menu);
             if (mapping == null) {
                 session.hiddenContainers.add(open.getContainerId());
@@ -77,6 +82,8 @@ public final class ContainerBridge {
                 return;
             }
             session.containerMappings.put(menu.containerId, mapping);
+            Runnable onClose = fr.citizen.bedrock.forms.CitizenModsBridge.closeAction(player, menu);
+            if (onClose != null) session.closeActions.put(menu.containerId, onClose);
             int rows = (mapping.clientSize - 36) / 9;
             player.connection.send(new ClientboundOpenScreenPacket(menu.containerId, CHESTS[rows - 1], open.getTitle()));
             menu.sendAllDataToRemote();

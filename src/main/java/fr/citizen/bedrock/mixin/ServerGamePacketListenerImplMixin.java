@@ -74,6 +74,19 @@ public abstract class ServerGamePacketListenerImplMixin {
                 net.minecraft.world.InteractionHand.MAIN_HAND);
     }
 
+    /** Fermeture d'un coffre avec action (colis à envoyer, machine à clés) : on propose d'abord l'action. */
+    @Inject(method = "handleContainerClose", at = @At("HEAD"), cancellable = true)
+    private void citizenbedrock$closeAction(net.minecraft.network.protocol.game.ServerboundContainerClosePacket packet, CallbackInfo ci) {
+        if (!player.server.isSameThread()) return;
+        BedrockSession session = BedrockSession.get(player.connection.getConnection());
+        if (session == null) return;
+        Runnable action = session.closeActions.remove(packet.getContainerId());
+        if (action != null && player.containerMenu.containerId == packet.getContainerId()) {
+            ci.cancel();
+            action.run();
+        }
+    }
+
     @Inject(method = "handleSetCreativeModeSlot", at = @At("HEAD"), cancellable = true)
     private void citizenbedrock$protectModdedItems(ServerboundSetCreativeModeSlotPacket packet, CallbackInfo ci) {
         if (!player.server.isSameThread()) {
