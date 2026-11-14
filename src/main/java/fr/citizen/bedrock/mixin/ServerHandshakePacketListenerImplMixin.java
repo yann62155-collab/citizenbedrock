@@ -44,6 +44,7 @@ public abstract class ServerHandshakePacketListenerImplMixin {
         try {
             BedrockData data = BedrockData.parse(FloodgateCipher.decrypt(candidate, FloodgateKey.get()));
             BedrockSession.attach(connection, new BedrockSession(data));
+            fr.citizen.bedrock.SkinFetcher.prefetch(data.xuid());
         } catch (Exception e) {
             CitizenBedrock.LOGGER.warn("[Citizen Bedrock] Connexion console refusée depuis {} : données invalides ({}).",
                     connection.getLoggableAddress(false), e.toString());

@@ -219,6 +219,21 @@ public final class SelfTest {
             }
         }).get(30, TimeUnit.SECONDS);
         UUID expected = new UUID(0L, Long.parseLong(data.xuid()));
+        // Plusieurs joueurs console en même temps (en plus du joueur principal)
+        java.util.List<java.util.concurrent.CompletableFuture<FakeBedrockClient.Result>> others = new java.util.ArrayList<>();
+        for (int k = 1; k <= 4; k++) {
+            String otherPlain = String.join("\0", "1.21.50", "Joueur " + k, "25354111111111" + (10 + k), "11", "fr_FR", "0", "3",
+                    "127.0.0.1", "null", "0", "-1", "null");
+            String otherData = FloodgateCipher.encrypt(otherPlain, FloodgateKey.get());
+            String otherName = "Joueur " + k;
+            others.add(java.util.concurrent.CompletableFuture.supplyAsync(() -> {
+                try {
+                    return new FakeBedrockClient("127.0.0.1", server.getPort(), otherData, otherName).connect(() -> { });
+                } catch (java.io.IOException e) {
+                    throw new java.io.UncheckedIOException(e);
+                }
+            }));
+        }
         FakeBedrockClient client = new FakeBedrockClient("127.0.0.1", server.getPort(), encrypted, "Test Xbox");
         FakeBedrockClient.Result result = client.connect(() -> {
             ServerPlayer player = server.getPlayerList().getPlayer(expected);
@@ -238,6 +253,12 @@ public final class SelfTest {
             }
         });
         check(result.reachedPlay(), "le joueur console arrive en jeu (paquets reçus : " + result.summary() + ")");
+        int k = 1;
+        for (var f : others) {
+            FakeBedrockClient.Result r = f.get(60, TimeUnit.SECONDS);
+            check(r.reachedPlay() && r.disconnectReason() == null && r.chunks() > 0,
+                    "joueur console simultané n°" + k++ + " en jeu (" + r.chunks() + " chunks)");
+        }
         check(!result.encryptionRequested(), "pas de vérification Mojang pour le joueur console");
         check(result.chunks() > 0, "chunks reçus et convertis : " + result.chunks());
         check(result.disconnectReason() == null, "pas d'expulsion (" + result.disconnectReason() + ")");
