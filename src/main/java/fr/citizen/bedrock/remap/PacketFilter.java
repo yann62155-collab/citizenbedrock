@@ -97,6 +97,17 @@ public final class PacketFilter {
                 for (Packet<?> p : cinematic) runReentrant(() -> listener.send(p));
                 return null;
             }
+            // Citizen Economy : écrans et annonces convertis pour la console
+            if (listener instanceof ServerGamePacketListenerImpl econ) {
+                if (fr.citizen.bedrock.forms.EconomyBridge.VIEW.equals(id.toString())) {
+                    fr.citizen.bedrock.forms.EconomyBridge.view(econ.player, custom.payload());
+                    return null;
+                }
+                if (fr.citizen.bedrock.forms.EconomyBridge.HUD.equals(id.toString())) {
+                    fr.citizen.bedrock.forms.EconomyBridge.announcement(econ.player, custom.payload());
+                    return null;
+                }
+            }
             // Parchemin /citizen : affiché en menu Bedrock au lieu de l'écran PC
             if (fr.citizen.bedrock.forms.CitizenHubBridge.OPEN_HUB.equals(id.toString()) && listener instanceof ServerGamePacketListenerImpl game) {
                 fr.citizen.bedrock.forms.CitizenHubBridge.open(game.player, custom.payload());

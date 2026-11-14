@@ -35,6 +35,7 @@ public abstract class ServerLoginPacketListenerImplMixin {
         }
         ci.cancel();
         GameProfile profile = session.profile();
+        fr.citizen.bedrock.SkinFetcher.apply(profile, session.data().xuid());
         this.requestedUsername = profile.getName();
         startClientVerification(profile);
     }

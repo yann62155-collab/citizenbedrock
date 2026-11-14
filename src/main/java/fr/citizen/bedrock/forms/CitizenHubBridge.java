@@ -104,10 +104,41 @@ public final class CitizenHubBridge {
         }
     }
 
+    /** Textures Bedrock correspondant aux icônes Java (les noms diffèrent souvent entre les deux éditions). */
+    private static final java.util.Map<String, String> ICONS = java.util.Map.ofEntries(
+            java.util.Map.entry("amethyst_shard", "textures/items/amethyst_shard"),
+            java.util.Map.entry("bell", "textures/items/villagebell"),
+            java.util.Map.entry("blast_furnace", "textures/blocks/blast_furnace_front_off"),
+            java.util.Map.entry("chest", "textures/blocks/chest_front"),
+            java.util.Map.entry("clock", "textures/items/clock_item"),
+            java.util.Map.entry("crafting_table", "textures/blocks/crafting_table_front"),
+            java.util.Map.entry("ender_eye", "textures/items/ender_eye"),
+            java.util.Map.entry("feather", "textures/items/feather"),
+            java.util.Map.entry("gold_ingot", "textures/items/gold_ingot"),
+            java.util.Map.entry("iron_sword", "textures/items/iron_sword"),
+            java.util.Map.entry("oak_door", "textures/items/door_wood"),
+            java.util.Map.entry("painting", "textures/items/painting"),
+            java.util.Map.entry("paper", "textures/items/paper"),
+            java.util.Map.entry("writable_book", "textures/items/book_writable"),
+            java.util.Map.entry("book", "textures/items/book_normal"),
+            java.util.Map.entry("compass", "textures/items/compass_item"),
+            java.util.Map.entry("emerald", "textures/items/emerald"),
+            java.util.Map.entry("iron_ingot", "textures/items/iron_ingot"),
+            java.util.Map.entry("bread", "textures/items/bread"),
+            java.util.Map.entry("fishing_rod", "textures/items/fishing_rod_uncast"),
+            java.util.Map.entry("map", "textures/items/map_empty"),
+            java.util.Map.entry("name_tag", "textures/items/name_tag"),
+            java.util.Map.entry("item_frame", "textures/items/item_frame"),
+            java.util.Map.entry("lantern", "textures/items/lantern"),
+            java.util.Map.entry("bow", "textures/items/bow_standby"),
+            java.util.Map.entry("anvil", "textures/blocks/anvil_top_damaged_0"),
+            java.util.Map.entry("furnace", "textures/blocks/furnace_front_off"));
+
     private static String icon(String icone) {
         if (icone == null || icone.isBlank()) return null;
+        if (icone.contains(":") && !icone.startsWith("minecraft:")) return null; // objet moddé : pas d'image plutôt qu'un damier
         String path = icone.contains(":") ? icone.substring(icone.indexOf(':') + 1) : icone;
-        return icone.startsWith("minecraft:") || !icone.contains(":") ? "textures/items/" + path : null;
+        return ICONS.get(path);
     }
 
     private static String shorten(String s) {
