@@ -41,7 +41,7 @@ public final class CinematicsBridge {
                         new ClientboundSetTitlesAnimationPacket(20, 20 * 60 * 30, 20),
                         new ClientboundSetTitleTextPacket(Component.literal("§6§l" + title)),
                         new ClientboundSetSubtitleTextPacket(Component.literal(
-                                fr.citizen.bedrock.BedrockConfig.VALUES.portWeb > 0
+                                fr.citizen.bedrock.web.WebServer.running()
                                         ? "§eÀ regarder sur : §f" + fr.citizen.bedrock.web.WebServer.address()
                                         : "§eCinématique en cours (visible sur PC)")));
             } catch (ReflectiveOperationException | RuntimeException e) {

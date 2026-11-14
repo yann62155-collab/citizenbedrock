@@ -29,6 +29,12 @@ public final class WebServer {
     public static synchronized void start() {
         int port = BedrockConfig.VALUES.portWeb;
         if (port <= 0 || socket != null) return;
+        if (net.neoforged.fml.ModList.get().isLoaded("citizenvoice") && port == 30053) {
+            // Le site de Citizen Voix utilise déjà ce port : la page des cinématiques a besoin d'un autre port.
+            CitizenBedrock.LOGGER.warn("[Citizen Bedrock] Page des cinématiques désactivée : le port 30053 est celui de Citizen Voix. "
+                    + "Réserve un autre port chez BoxToPlay et mets-le dans \"portWeb\" (config/citizenbedrock/citizenbedrock.json).");
+            return;
+        }
         try {
             socket = new ServerSocket();
             socket.setReuseAddress(true);
@@ -65,6 +71,10 @@ public final class WebServer {
         }
         socket = null;
         if (workers != null) workers.shutdownNow();
+    }
+
+    public static boolean running() {
+        return socket != null && !socket.isClosed();
     }
 
     public static String address() {
