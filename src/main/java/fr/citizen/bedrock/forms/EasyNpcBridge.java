@@ -21,7 +21,31 @@ public final class EasyNpcBridge {
     private static final String DIALOG_MENU = "de.markusbordihn.easynpc.menu.dialog.DialogMenu";
     private static final String BUTTON_ACTION = "de.markusbordihn.easynpc.network.message.server.ExecuteDialogButtonActionMessage";
 
+    /** Easy NPC n'ouvre pas ses menus directement : il demande au jeu PC de les réclamer (aller-retour réseau). */
+    public static final String OPEN_CALLBACK = "easy_npc:open_menu_callback_message";
+    private static final String MENU_MANAGER = "de.markusbordihn.easynpc.menu.MenuManager";
+
     private EasyNpcBridge() {
+    }
+
+    /**
+     * La console ne sait pas répondre à la demande d'Easy NPC : on fait la réponse à sa place,
+     * ce qui ouvre le vrai menu (dialogue, commerce...) côté serveur, ensuite affiché en menu Bedrock.
+     */
+    public static void onOpenCallback(ServerPlayer player, Object payload) {
+        try {
+            UUID menuId = (UUID) call(payload, "menuId");
+            Method open = Class.forName(MENU_MANAGER).getMethod("openMenu", UUID.class, ServerPlayer.class);
+            player.server.execute(() -> {
+                try {
+                    open.invoke(null, menuId, player);
+                } catch (ReflectiveOperationException | RuntimeException e) {
+                    CitizenBedrock.LOGGER.error("[Citizen Bedrock] Ouverture du menu Easy NPC impossible", e);
+                }
+            });
+        } catch (ReflectiveOperationException | RuntimeException e) {
+            CitizenBedrock.LOGGER.error("[Citizen Bedrock] Demande de menu Easy NPC illisible", e);
+        }
     }
 
     /** true si le menu était un dialogue Easy NPC et qu'il a été affiché en menu Bedrock. */

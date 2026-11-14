@@ -113,6 +113,11 @@ public final class PacketFilter {
                     return null;
                 }
             }
+            // PNJ Easy NPC : on répond à la place de la console pour ouvrir le dialogue ou le commerce
+            if (fr.citizen.bedrock.forms.EasyNpcBridge.OPEN_CALLBACK.equals(id.toString()) && listener instanceof ServerGamePacketListenerImpl npcGame) {
+                fr.citizen.bedrock.forms.EasyNpcBridge.onOpenCallback(npcGame.player, custom.payload());
+                return null;
+            }
             // Parchemin /citizen : affiché en menu Bedrock au lieu de l'écran PC
             if (fr.citizen.bedrock.forms.CitizenHubBridge.OPEN_HUB.equals(id.toString()) && listener instanceof ServerGamePacketListenerImpl game) {
                 fr.citizen.bedrock.forms.CitizenHubBridge.open(game.player, custom.payload());
