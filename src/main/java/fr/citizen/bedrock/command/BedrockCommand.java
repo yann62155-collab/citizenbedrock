@@ -18,6 +18,16 @@ public final class BedrockCommand {
     }
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        // /menu : menu rapide des joueurs console
+        dispatcher.register(Commands.literal("menu").executes(ctx -> {
+            var player = ctx.getSource().getPlayerOrException();
+            if (!BedrockPlayers.isBedrock(player)) {
+                ctx.getSource().sendFailure(Component.literal("Menu rapide réservé aux joueurs console."));
+                return 0;
+            }
+            fr.citizen.bedrock.forms.QuickMenu.open(player);
+            return 1;
+        }));
         // /historique : relire les derniers messages du chat (joueurs console)
         dispatcher.register(Commands.literal("historique").executes(ctx -> {
             var player = ctx.getSource().getPlayerOrException();

@@ -48,6 +48,11 @@ public final class CitizenBedrock {
         NeoForge.EVENT_BUS.addListener(this::onRegisterCommands);
         NeoForge.EVENT_BUS.addListener(this::onLogin);
         NeoForge.EVENT_BUS.addListener(this::onRightClickBlock);
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.tick.PlayerTickEvent.Post e) -> {
+            if (e.getEntity() instanceof ServerPlayer sp && BedrockPlayers.isBedrock(sp)) {
+                fr.citizen.bedrock.forms.QuickMenu.tick(sp);
+            }
+        });
         NeoForge.EVENT_BUS.addListener(this::onRightClickItem);
         NeoForge.EVENT_BUS.addListener(this::onLogout);
     }
@@ -108,5 +113,6 @@ public final class CitizenBedrock {
     private void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
         BedrockPlayers.remove(event.getEntity().getUUID());
         fr.citizen.bedrock.forms.BedrockForms.forget(event.getEntity().getUUID());
+        fr.citizen.bedrock.forms.QuickMenu.forget(event.getEntity().getUUID());
     }
 }
