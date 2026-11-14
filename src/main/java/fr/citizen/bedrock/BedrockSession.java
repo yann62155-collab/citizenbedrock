@@ -31,6 +31,15 @@ public final class BedrockSession {
     public final IntSet pendingContainers = IntSets.synchronize(new IntOpenHashSet());
     /** Action à proposer quand le joueur ferme certains menus (envoi de colis, machine à clés...). */
     public final java.util.Map<Integer, Runnable> closeActions = new java.util.concurrent.ConcurrentHashMap<>();
+    /** Derniers messages du chat reçus par ce joueur (pour /historique). */
+    public final java.util.Deque<String> chatHistory = new java.util.concurrent.ConcurrentLinkedDeque<>();
+
+    public void remember(String line) {
+        String time = java.time.LocalTime.now(java.time.ZoneId.of("Europe/Paris")).withNano(0).toString().substring(0, 5);
+        chatHistory.addLast("§8" + time + "§r " + line);
+        while (chatHistory.size() > 150) chatHistory.pollFirst();
+    }
+
     /** Menus moddés fermés pour ce joueur. */
     public final IntSet hiddenContainers = IntSets.synchronize(new IntOpenHashSet());
 

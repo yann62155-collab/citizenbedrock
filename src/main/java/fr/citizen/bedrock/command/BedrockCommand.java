@@ -18,6 +18,20 @@ public final class BedrockCommand {
     }
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        // /historique : relire les derniers messages du chat (joueurs console)
+        dispatcher.register(Commands.literal("historique").executes(ctx -> {
+            var player = ctx.getSource().getPlayerOrException();
+            BedrockSession session = BedrockPlayers.get(player.getUUID());
+            if (session == null) {
+                ctx.getSource().sendFailure(Component.literal("Commande réservée aux joueurs console : sur PC, appuie sur T."));
+                return 0;
+            }
+            java.util.List<String> lines = new java.util.ArrayList<>(session.chatHistory);
+            int from = Math.max(0, lines.size() - 100);
+            String text = lines.isEmpty() ? "§7Aucun message pour l'instant." : String.join("\n", lines.subList(from, lines.size()));
+            fr.citizen.bedrock.forms.BedrockForms.simple("Historique du chat", text).button("Fermer").send(player);
+            return 1;
+        }));
         dispatcher.register(Commands.literal("citizenbedrock")
                 .requires(source -> source.hasPermission(3))
                 .then(Commands.literal("statut").executes(ctx -> status(ctx.getSource())))

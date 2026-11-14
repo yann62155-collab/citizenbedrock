@@ -122,6 +122,18 @@ public final class PacketFilter {
             return allowed ? packet : null;
         }
 
+        // --- Historique du chat (/historique)
+        if (packet instanceof net.minecraft.network.protocol.game.ClientboundSystemChatPacket sys && !sys.overlay()) {
+            session.remember(sys.content().getString());
+        } else if (packet instanceof net.minecraft.network.protocol.game.ClientboundPlayerChatPacket chat
+                && listener instanceof ServerGamePacketListenerImpl g) {
+            ServerPlayer from = g.player.server.getPlayerList().getPlayer(chat.sender());
+            String text = chat.unsignedContent() != null ? chat.unsignedContent().getString() : chat.body().content();
+            session.remember("§e" + (from == null ? "?" : from.getName().getString()) + "§r : " + text);
+        } else if (packet instanceof net.minecraft.network.protocol.game.ClientboundDisguisedChatPacket chat) {
+            session.remember("§e" + chat.chatType().name().getString() + "§r : " + chat.message().getString());
+        }
+
         // --- Paquets groupés : on filtre chaque morceau
         if (packet instanceof ClientboundBundlePacket bundle) {
             List<Packet<? super ClientGamePacketListener>> kept = new ArrayList<>();
