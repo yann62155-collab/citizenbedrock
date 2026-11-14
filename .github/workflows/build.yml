@@ -26,6 +26,8 @@ jobs:
         run: chmod +x gradlew && ./gradlew build --stacktrace
 
       - name: Autotest sur un vrai serveur NeoForge (connexion console simulée + pont Geyser)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           mkdir -p run
           echo "eula=true" > run/eula.txt

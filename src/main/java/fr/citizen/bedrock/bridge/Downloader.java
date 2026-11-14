@@ -98,7 +98,16 @@ final class Downloader {
             versions.setProperty("viaproxy", tag);
             saveVersions();
         } catch (IOException e) {
-            if (!Files.exists(target)) throw e;
+            if (!Files.exists(target)) {
+                // API GitHub limitée (HTTP 403) : on passe par la page publique des versions
+                String tag = latestTagWithoutApi("ViaVersion/ViaProxy");
+                String version = tag.startsWith("v") ? tag.substring(1) : tag;
+                CitizenBedrock.LOGGER.info("[Citizen Bedrock] Téléchargement de ViaProxy {} (sans l'API GitHub)...", tag);
+                download("https://github.com/ViaVersion/ViaProxy/releases/download/" + tag + "/ViaProxy-" + version + ".jar", target, null);
+                versions.setProperty("viaproxy", tag);
+                saveVersions();
+                return;
+            }
             CitizenBedrock.LOGGER.warn("[Citizen Bedrock] Vérification de mise à jour de ViaProxy impossible ({}), version actuelle conservée.", e.getMessage());
         }
     }
@@ -126,17 +135,42 @@ final class Downloader {
             versions.setProperty("xboxbroadcast", tag);
             saveVersions();
         } catch (IOException e) {
-            if (!Files.exists(target)) throw e;
+            if (!Files.exists(target)) {
+                String tag = latestTagWithoutApi("MCXboxBroadcast/Broadcaster");
+                CitizenBedrock.LOGGER.info("[Citizen Bedrock] Téléchargement du module compte Xbox (build {}, sans l'API GitHub)...", tag);
+                download("https://github.com/MCXboxBroadcast/Broadcaster/releases/download/" + tag + "/" + assetName, target, null);
+                versions.setProperty("xboxbroadcast", tag);
+                saveVersions();
+                return;
+            }
             CitizenBedrock.LOGGER.warn("[Citizen Bedrock] Vérification de mise à jour du module compte Xbox impossible ({}), version actuelle conservée.", e.getMessage());
         }
     }
 
+    /** Dernière version d'un dépôt GitHub via la redirection de github.com/.../releases/latest (pas de limite d'API). */
+    private static String latestTagWithoutApi(String repo) throws IOException, InterruptedException {
+        HttpClient noRedirect = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NEVER)
+                .connectTimeout(Duration.ofSeconds(20)).build();
+        HttpRequest request = HttpRequest.newBuilder(URI.create("https://github.com/" + repo + "/releases/latest"))
+                .timeout(Duration.ofSeconds(30)).header("User-Agent", "CitizenBedrock/1.0")
+                .method("HEAD", HttpRequest.BodyPublishers.noBody()).build();
+        HttpResponse<Void> response = noRedirect.send(request, HttpResponse.BodyHandlers.discarding());
+        String location = response.headers().firstValue("location").orElse("");
+        int i = location.indexOf("/releases/tag/");
+        if (i < 0) throw new IOException("Version introuvable pour " + repo + " (HTTP " + response.statusCode() + ")");
+        return java.net.URLDecoder.decode(location.substring(i + "/releases/tag/".length()), java.nio.charset.StandardCharsets.UTF_8);
+    }
+
     private JsonElement getJson(String url) throws IOException, InterruptedException {
-        HttpRequest request = HttpRequest.newBuilder(URI.create(url))
+        HttpRequest.Builder builder = HttpRequest.newBuilder(URI.create(url))
                 .timeout(Duration.ofSeconds(30))
                 .header("User-Agent", "CitizenBedrock/1.0")
-                .header("Accept", "application/json")
-                .build();
+                .header("Accept", "application/json");
+        String token = System.getenv("GITHUB_TOKEN"); // seulement pendant la compilation sur GitHub
+        if (token != null && !token.isBlank() && url.startsWith("https://api.github.com/")) {
+            builder.header("Authorization", "Bearer " + token);
+        }
+        HttpRequest request = builder.build();
         HttpResponse<String> response = http.send(request, HttpResponse.BodyHandlers.ofString());
         if (response.statusCode() != 200) {
             throw new IOException("HTTP " + response.statusCode() + " pour " + url);
