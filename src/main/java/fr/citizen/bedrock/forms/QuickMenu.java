@@ -52,6 +52,10 @@ public final class QuickMenu {
         ModList mods = ModList.get();
         if (mods.isLoaded("citizenhub")) entries.add(new Entry("Registre du Royaume\n§8toutes les fonctions (/citizen)", "textures/items/book_writable", () -> run(player, "citizen")));
         if (mods.isLoaded("citizeneconomy")) entries.add(new Entry("Banque & factures\n§8économie (/ceconomy)", "textures/items/gold_ingot", () -> run(player, "ceconomy")));
+        if (mods.isLoaded("citizenboutique")) entries.add(new Entry("Boutique\n§8l'échoppe du royaume", "textures/items/emerald", () -> CitizenExtrasBridge.openShop(player)));
+        if (mods.isLoaded("citizenmancie")) entries.add(new Entry("Grimoire\n§8lancer un sort", "textures/items/book_enchanted", () -> CitizenExtrasBridge.openSpells(player)));
+        if (mods.isLoaded("citizenfactions")) entries.add(new Entry("Faction\n§8(/factions)", "textures/items/banner_pattern", () -> run(player, "factions")));
+        if (mods.isLoaded("citizenguilds")) entries.add(new Entry("Guilde\n§8membres, banque, donjons", "textures/items/iron_sword", () -> CitizenExtrasBridge.openGuild(player)));
         if (mods.isLoaded("hiboupostal")) entries.add(new Entry("Envoyer une lettre\n§8volière du hibou", "textures/items/feather", () -> CitizenModsBridge.openOwlery(player)));
         if (mods.isLoaded("citizencraft")) entries.add(new Entry("Livre des recettes\n§8(/craft)", "textures/blocks/crafting_table_front", () -> CraftBook.open(player)));
         entries.add(new Entry("Relire le chat\n§8(/historique)", "textures/items/paper", () -> run(player, "historique")));
@@ -77,7 +81,9 @@ public final class QuickMenu {
                 "§6Affiches :§r accroupi + clic droit pour choisir l'image.",
                 "§6Lettres :§r clic droit sur une lettre scellée pour la lire.",
                 "§6Colis :§r en fermant le carton, on te demande le destinataire.",
-                "§6Machines des mods :§r elles s'ouvrent comme un coffre."))
+                "§6Machines des mods :§r elles s'ouvrent comme un coffre.",
+                "§6Boutique, guilde, faction, sorts :§r dans ce menu.",
+                "§6Statue guide :§r approche-toi, la liste des voyages s'ouvre."))
                 .button("§8« Retour").onClick(i -> open(player)).send(player);
     }
 }

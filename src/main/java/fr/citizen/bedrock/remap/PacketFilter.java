@@ -104,7 +104,7 @@ public final class PacketFilter {
             }
             // Citizen Economy : écrans et annonces convertis pour la console
             if (listener instanceof ServerGamePacketListenerImpl econ) {
-                if (fr.citizen.bedrock.forms.EconomyBridge.VIEW.equals(id.toString())) {
+                if (fr.citizen.bedrock.forms.EconomyBridge.VIEWS.containsKey(id.toString())) {
                     fr.citizen.bedrock.forms.EconomyBridge.view(econ.player, custom.payload());
                     return null;
                 }
@@ -112,6 +112,11 @@ public final class PacketFilter {
                     fr.citizen.bedrock.forms.EconomyBridge.announcement(econ.player, custom.payload());
                     return null;
                 }
+            }
+            // Boutique, guildes, mancie, statues guides
+            if (listener instanceof ServerGamePacketListenerImpl extra
+                    && fr.citizen.bedrock.forms.CitizenExtrasBridge.onPayload(extra.player, custom.payload())) {
+                return null;
             }
             // PNJ Easy NPC : on répond à la place de la console pour ouvrir le dialogue ou le commerce
             if (fr.citizen.bedrock.forms.EasyNpcBridge.OPEN_CALLBACK.equals(id.toString()) && listener instanceof ServerGamePacketListenerImpl npcGame) {
@@ -122,6 +127,9 @@ public final class PacketFilter {
             if (fr.citizen.bedrock.forms.CitizenHubBridge.OPEN_HUB.equals(id.toString()) && listener instanceof ServerGamePacketListenerImpl game) {
                 fr.citizen.bedrock.forms.CitizenHubBridge.open(game.player, custom.payload());
                 return null;
+            }
+            if (fr.citizen.bedrock.forms.CitizenExtrasBridge.HANDLED_CHANNELS.contains(id.toString())) {
+                return null; // canal annoncé « présent » pour la console mais affiché par nos menus
             }
             boolean allowed = NetworkRegistry.hasChannel((ICommonPacketListener) listener, id);
             return allowed ? packet : null;

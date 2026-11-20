@@ -24,7 +24,8 @@
     "EntityEventPacketAccessor",
     "TagNetworkPayloadAccessor",
     "PlayerInfoUpdatePacketAccessor",
-    "InteractPacketAccessor"
+    "InteractPacketAccessor",
+    "NetworkRegistryChannelMixin"
   ],
   "injectors": {
     "defaultRequire": 1

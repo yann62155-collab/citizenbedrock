@@ -64,6 +64,8 @@ public final class SelfTest {
     }
 
     private static final java.util.concurrent.atomic.AtomicInteger FORM_CLICK = new java.util.concurrent.atomic.AtomicInteger(-1);
+    private static final java.util.concurrent.atomic.AtomicInteger CHANNEL_BRIDGED = new java.util.concurrent.atomic.AtomicInteger(-1);
+    private static final java.util.concurrent.atomic.AtomicInteger CHANNEL_OTHER = new java.util.concurrent.atomic.AtomicInteger(-1);
 
     private SelfTest() {
     }
@@ -250,8 +252,13 @@ public final class SelfTest {
                 });
                 // Un mod qui envoie des données sur son canal à un joueur console ne doit pas planter le serveur
                 PacketDistributor.sendToPlayer(player, new TestPayload());
+                CHANNEL_BRIDGED.set(player.connection.hasChannel(net.minecraft.resources.ResourceLocation.parse(
+                        fr.citizen.bedrock.forms.CitizenExtrasBridge.SHOP_SYNC)) ? 1 : 0);
+                CHANNEL_OTHER.set(player.connection.hasChannel(net.minecraft.resources.ResourceLocation.parse("citizenboutique:open")) ? 1 : 0);
             }
         });
+        check(CHANNEL_BRIDGED.get() == 1, "canal de la boutique annoncé présent pour la console");
+        check(CHANNEL_OTHER.get() == 0, "les autres canaux restent absents pour la console");
         check(result.reachedPlay(), "le joueur console arrive en jeu (paquets reçus : " + result.summary() + ")");
         int k = 1;
         for (var f : others) {

@@ -24,6 +24,13 @@ import java.util.Map;
 public final class EconomyBridge {
     public static final String VIEW = "citizeneconomy:view";
     public static final String HUD = "citizeneconomy:announcement_hud";
+    /**
+     * Mods Citizen qui utilisent le même système de « vues » pilotées par le serveur
+     * (canal de la vue -> paquet Java contenant ActionPayload et Network.onAction).
+     */
+    public static final Map<String, String> VIEWS = Map.of(
+            VIEW, "fr.citizen.economy.platform",
+            "citizenfactions:view", "fr.citizen.factions.platform");
 
     private record Btn(String label, String action, Map<String, String> args, String confirm) {
     }
@@ -44,16 +51,17 @@ public final class EconomyBridge {
     }
 
     public static void view(ServerPlayer player, CustomPacketPayload payload) {
+        String pkg = VIEWS.getOrDefault(payload.type().id().toString(), VIEWS.get(VIEW));
         try {
             String json = (String) payload.getClass().getMethod("json").invoke(payload);
             JsonObject v = JsonParser.parseString(json).getAsJsonObject();
-            player.server.execute(() -> show(player, v));
+            player.server.execute(() -> show(player, v, pkg));
         } catch (ReflectiveOperationException | RuntimeException e) {
             CitizenBedrock.LOGGER.error("[Citizen Bedrock] Écran Citizen Economy illisible", e);
         }
     }
 
-    private static void show(ServerPlayer player, JsonObject v) {
+    private static void show(ServerPlayer player, JsonObject v, String pkg) {
         String id = str(v, "id");
         String nonce = str(v, "nonce");
         String title = str(v, "title");
@@ -91,7 +99,7 @@ public final class EconomyBridge {
         if (fields.isEmpty()) {
             BedrockForms.Simple form = BedrockForms.simple(title, text.toString().trim());
             for (Btn b : buttons) form.button(b.label());
-            form.onClick(i -> fire(player, buttons.get(i), id, nonce, Map.of())).send(player);
+            form.onClick(i -> fire(player, pkg, buttons.get(i), id, nonce, Map.of())).send(player);
             return;
         }
 
@@ -124,24 +132,24 @@ public final class EconomyBridge {
                 }
             }
             if (!buttons.isEmpty()) {
-                fire(player, buttons.get(Math.max(0, Math.min(chosen, buttons.size() - 1))), id, nonce, filled);
+                fire(player, pkg, buttons.get(Math.max(0, Math.min(chosen, buttons.size() - 1))), id, nonce, filled);
             }
         }).send(player);
     }
 
     /** Envoie l'action au mod économie (avec confirmation si le bouton en demande une). */
-    private static void fire(ServerPlayer player, Btn b, String viewId, String nonce, Map<String, String> fields) {
+    private static void fire(ServerPlayer player, String pkg, Btn b, String viewId, String nonce, Map<String, String> fields) {
         if (b.confirm() != null && !b.confirm().isEmpty()) {
             BedrockForms.modal("Confirmation", b.confirm(), "Confirmer", "Annuler")
                     .onAnswer(yes -> {
-                        if (yes) send(player, b, viewId, nonce, fields);
+                        if (yes) send(player, pkg, b, viewId, nonce, fields);
                     }).send(player);
             return;
         }
-        send(player, b, viewId, nonce, fields);
+        send(player, pkg, b, viewId, nonce, fields);
     }
 
-    private static void send(ServerPlayer player, Btn b, String viewId, String nonce, Map<String, String> fields) {
+    private static void send(ServerPlayer player, String pkg, Btn b, String viewId, String nonce, Map<String, String> fields) {
         Map<String, String> args = new LinkedHashMap<>(b.args());
         if (!b.action().equals("open")) {
             args.putAll(fields);
@@ -150,9 +158,9 @@ public final class EconomyBridge {
             args.put("_v", viewId);
         }
         try {
-            Class<?> payloadClass = Class.forName("fr.citizen.economy.platform.ActionPayload");
+            Class<?> payloadClass = Class.forName(pkg + ".ActionPayload");
             Object payload = payloadClass.getConstructor(String.class, String.class).newInstance(b.action(), toJson(args));
-            Class<?> network = Class.forName("fr.citizen.economy.platform.Network");
+            Class<?> network = Class.forName(pkg + ".Network");
             Class<?> ctxClass = Class.forName("net.neoforged.neoforge.network.handling.IPayloadContext");
             Object ctx = Proxy.newProxyInstance(ctxClass.getClassLoader(), new Class<?>[]{ctxClass}, (proxy, method, a) -> {
                 if (method.getName().equals("player")) return player;
@@ -167,7 +175,7 @@ public final class EconomyBridge {
             onAction.setAccessible(true);
             onAction.invoke(null, payload, ctx);
         } catch (ReflectiveOperationException | RuntimeException e) {
-            CitizenBedrock.LOGGER.error("[Citizen Bedrock] Action Citizen Economy impossible", e);
+            CitizenBedrock.LOGGER.error("[Citizen Bedrock] Action impossible ({})", pkg, e);
             player.sendSystemMessage(Component.literal("§c[Citizen Bedrock] Action impossible, préviens un admin."));
         }
     }
