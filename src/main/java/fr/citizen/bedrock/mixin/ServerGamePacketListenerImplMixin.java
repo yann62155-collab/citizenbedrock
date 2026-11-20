@@ -75,6 +75,12 @@ public abstract class ServerGamePacketListenerImplMixin {
     }
 
     /** Fermeture d'un coffre avec action (colis à envoyer, machine à clés) : on propose d'abord l'action. */
+    /** Joueur console sur une monture moddée : frapper = souffle de la monture (tâche principale uniquement). */
+    @Inject(method = "handleAnimate", at = @At("TAIL"))
+    private void citizenbedrock$mountBreath(net.minecraft.network.protocol.game.ServerboundSwingPacket packet, CallbackInfo ci) {
+        fr.citizen.bedrock.ConsoleMounts.swing(((ServerGamePacketListenerImpl) (Object) this).player);
+    }
+
     @Inject(method = "handleContainerClose", at = @At("HEAD"), cancellable = true)
     private void citizenbedrock$closeAction(net.minecraft.network.protocol.game.ServerboundContainerClosePacket packet, CallbackInfo ci) {
         if (!player.server.isSameThread()) return;

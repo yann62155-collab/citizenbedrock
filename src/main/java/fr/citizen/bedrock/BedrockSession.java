@@ -24,6 +24,10 @@ public final class BedrockSession {
     /** Créatures moddées affichées sous une autre forme : id réseau -> dernier index de données autorisé. */
     public final java.util.Map<Integer, Integer> substitutedEntities = new java.util.concurrent.ConcurrentHashMap<>();
     /** Créatures affichées comme des personnages (joueurs factices) : id réseau -> UUID du profil. */
+    /** Créatures affichées à une autre taille (attribut « scale ») : id -> taille. */
+    public final java.util.Map<Integer, Double> entityScales = new java.util.concurrent.ConcurrentHashMap<>();
+    /** Créatures montrées en dragon de l'End : sa tête est à l'opposé du sens habituel, on retourne l'orientation. */
+    public final IntSet flippedYaw = IntSets.synchronize(new IntOpenHashSet());
     public final java.util.Map<Integer, UUID> fakePlayers = new java.util.concurrent.ConcurrentHashMap<>();
     /** Menus moddés affichés comme un coffre : id du menu -> correspondance des cases. */
     public final java.util.Map<Integer, fr.citizen.bedrock.remap.ContainerBridge.Mapping> containerMappings = new java.util.concurrent.ConcurrentHashMap<>();

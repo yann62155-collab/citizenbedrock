@@ -25,7 +25,10 @@
     "TagNetworkPayloadAccessor",
     "PlayerInfoUpdatePacketAccessor",
     "InteractPacketAccessor",
-    "NetworkRegistryChannelMixin"
+    "NetworkRegistryChannelMixin",
+    "LivingEntityAccessor",
+    "EntityControlMixin",
+    "PlayerRidingMixin"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -51,6 +51,7 @@ public final class CitizenBedrock {
         NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.tick.PlayerTickEvent.Post e) -> {
             if (e.getEntity() instanceof ServerPlayer sp && BedrockPlayers.isBedrock(sp)) {
                 fr.citizen.bedrock.forms.QuickMenu.tick(sp);
+                ConsoleMounts.tick(sp);
             }
         });
         NeoForge.EVENT_BUS.addListener(this::onRightClickItem);
@@ -102,6 +103,10 @@ public final class CitizenBedrock {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
         if (!BedrockPlayers.isBedrock(player)) return;
         var id = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(event.getItemStack().getItem());
+        if (id.toString().equals("iceandfire:bestiary")) {
+            fr.citizen.bedrock.forms.BestiaryBridge.open(player, event.getItemStack());
+            return;
+        }
         if (!"hiboupostal".equals(id.getNamespace())) return;
         if (id.getPath().equals("sealed_letter")) {
             fr.citizen.bedrock.forms.CitizenModsBridge.readLetter(player, event.getItemStack());
@@ -114,5 +119,6 @@ public final class CitizenBedrock {
         BedrockPlayers.remove(event.getEntity().getUUID());
         fr.citizen.bedrock.forms.BedrockForms.forget(event.getEntity().getUUID());
         fr.citizen.bedrock.forms.QuickMenu.forget(event.getEntity().getUUID());
+        ConsoleMounts.forget(event.getEntity().getUUID());
     }
 }

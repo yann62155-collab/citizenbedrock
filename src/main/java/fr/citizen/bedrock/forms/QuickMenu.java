@@ -50,12 +50,15 @@ public final class QuickMenu {
         if (!BedrockPlayers.isBedrock(player)) return;
         List<Entry> entries = new ArrayList<>();
         ModList mods = ModList.get();
+        if (player.getVehicle() != null) entries.add(new Entry("Descendre de ta monture\n§8" + player.getVehicle().getName().getString(),
+                "textures/items/saddle", () -> fr.citizen.bedrock.ConsoleMounts.dismount(player)));
         if (mods.isLoaded("citizenhub")) entries.add(new Entry("Registre du Royaume\n§8toutes les fonctions (/citizen)", "textures/items/book_writable", () -> run(player, "citizen")));
         if (mods.isLoaded("citizeneconomy")) entries.add(new Entry("Banque & factures\n§8économie (/ceconomy)", "textures/items/gold_ingot", () -> run(player, "ceconomy")));
         if (mods.isLoaded("citizenboutique")) entries.add(new Entry("Boutique\n§8l'échoppe du royaume", "textures/items/emerald", () -> CitizenExtrasBridge.openShop(player)));
         if (mods.isLoaded("citizenmancie")) entries.add(new Entry("Grimoire\n§8lancer un sort", "textures/items/book_enchanted", () -> CitizenExtrasBridge.openSpells(player)));
         if (mods.isLoaded("citizenfactions")) entries.add(new Entry("Faction\n§8(/factions)", "textures/items/banner_pattern", () -> run(player, "factions")));
         if (mods.isLoaded("citizenguilds")) entries.add(new Entry("Guilde\n§8membres, banque, donjons", "textures/items/iron_sword", () -> CitizenExtrasBridge.openGuild(player)));
+        if (mods.isLoaded("iceandfire")) entries.add(new Entry("Bestiaire\n§8dragons et créatures", "textures/items/book_normal", () -> BestiaryBridge.openFromInventory(player)));
         if (mods.isLoaded("hiboupostal")) entries.add(new Entry("Envoyer une lettre\n§8volière du hibou", "textures/items/feather", () -> CitizenModsBridge.openOwlery(player)));
         if (mods.isLoaded("citizencraft")) entries.add(new Entry("Livre des recettes\n§8(/craft)", "textures/blocks/crafting_table_front", () -> CraftBook.open(player)));
         entries.add(new Entry("Relire le chat\n§8(/historique)", "textures/items/paper", () -> run(player, "historique")));
@@ -83,7 +86,9 @@ public final class QuickMenu {
                 "§6Colis :§r en fermant le carton, on te demande le destinataire.",
                 "§6Machines des mods :§r elles s'ouvrent comme un coffre.",
                 "§6Boutique, guilde, faction, sorts :§r dans ce menu.",
-                "§6Statue guide :§r approche-toi, la liste des voyages s'ouvre."))
+                "§6Statue guide :§r approche-toi, la liste des voyages s'ouvre.",
+                "§6Dragon / hippogriffe :§r regarde en haut ou en bas en avançant pour voler, saute pour décoller,"
+                        + " frappe pour cracher le souffle, accroupi au sol pour descendre."))
                 .button("§8« Retour").onClick(i -> open(player)).send(player);
     }
 }

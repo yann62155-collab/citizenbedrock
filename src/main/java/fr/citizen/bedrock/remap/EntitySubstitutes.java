@@ -38,8 +38,12 @@ public final class EntitySubstitutes {
             }
         }
         if (!(entity instanceof LivingEntity)) {
+            EntityType<?> projectile = projectileType(entity);
+            if (projectile != null) return projectile;
             return carcassType(entity);
         }
+        EntityType<?> special = specialCreature(entity, key);
+        if (special != null) return special;
         // Créature moddée qui hérite d'une créature vanilla (ex : zombie de l'ombre -> zombie)
         EntityType<?> parent = vanillaParent(entity);
         if (parent != null) return parent;
@@ -75,6 +79,83 @@ public final class EntitySubstitutes {
         if (width >= 3.0f) return EntityType.RAVAGER;
         if (height >= 1.5f) return EntityType.PLAYER;
         return EntityType.PIG;
+    }
+
+    /**
+     * Créatures qui ont besoin d'une apparence choisie à la main (Ice and Fire...).
+     * Jamais de cheval / chameau / cochon pour une monture moddée : la console voudrait la piloter
+     * elle-même et se battrait avec le serveur.
+     */
+    @Nullable
+    private static EntityType<?> specialCreature(Entity entity, ResourceLocation key) {
+        String path = key.getPath();
+        String cls = entity.getClass().getName().toLowerCase(Locale.ROOT);
+        if (isDragon(entity)) return EntityType.ENDER_DRAGON;
+        if (path.contains("hippogryph") || path.contains("amphithere") || path.contains("stymphalian")) return EntityType.PHANTOM;
+        if (path.contains("hippocampus")) return EntityType.DOLPHIN;
+        if (path.contains("sea_serpent") || path.contains("seaserpent")) return EntityType.GUARDIAN;
+        if (path.contains("death_worm") || path.contains("deathworm")) return EntityType.SILVERFISH;
+        if (path.contains("cockatrice")) return EntityType.CHICKEN;
+        if (path.contains("pixie")) return EntityType.ALLAY;
+        if (path.contains("hydra")) return EntityType.RAVAGER;
+        if (path.contains("cyclops") || path.contains("troll")) return EntityType.IRON_GOLEM;
+        if (path.contains("gorgon") || path.contains("siren")) return EntityType.WITCH;
+        if (path.contains("myrmex")) return EntityType.SPIDER;
+        if (path.contains("ghost")) return EntityType.VEX;
+        if (cls.contains("dread") && (path.contains("horse"))) return EntityType.SKELETON_HORSE;
+        if (cls.contains("dread")) return path.contains("lich") ? EntityType.STRAY : EntityType.WITHER_SKELETON;
+        return null;
+    }
+
+    /** Dragon d'Ice and Fire (ou d'un autre mod) : créature vivante dont la classe descend d'une base « dragon ». */
+    public static boolean isDragon(Entity entity) {
+        if (!(entity instanceof LivingEntity)) return false;
+        for (Class<?> c = entity.getClass(); c != null && c != Object.class; c = c.getSuperclass()) {
+            String n = c.getSimpleName().toLowerCase(Locale.ROOT);
+            if (n.contains("dragonfly")) return false;
+            if (n.startsWith("entitydragon") || n.endsWith("dragonbase")) return true;
+        }
+        return false;
+    }
+
+    /** Tirs moddés (souffles de dragon, sorts...) montrés comme un tir vanilla pour qu'on les voie arriver. */
+    @Nullable
+    private static EntityType<?> projectileType(Entity entity) {
+        String name = (BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()).getPath() + " "
+                + entity.getClass().getSimpleName()).toLowerCase(Locale.ROOT);
+        if (entity instanceof net.minecraft.world.entity.projectile.AbstractHurtingProjectile) {
+            if (name.contains("ice") || name.contains("frost") || name.contains("snow")) return EntityType.SNOWBALL;
+            if (name.contains("lightning") || name.contains("magic") || name.contains("pixie")) return EntityType.DRAGON_FIREBALL;
+            if (name.contains("wind")) return EntityType.WIND_CHARGE;
+            return entity.getBbWidth() >= 0.8f ? EntityType.FIREBALL : EntityType.SMALL_FIREBALL;
+        }
+        if (entity instanceof net.minecraft.world.entity.projectile.AbstractArrow) {
+            return name.contains("trident") || name.contains("spear") ? EntityType.TRIDENT : EntityType.ARROW;
+        }
+        if (entity instanceof net.minecraft.world.entity.projectile.ThrowableItemProjectile) {
+            return EntityType.SNOWBALL;
+        }
+        return null;
+    }
+
+    /**
+     * Taille à donner au substitut pour qu'il ait la taille de la vraie créature (1 = inchangée).
+     * La console sait agrandir ou réduire n'importe quelle créature.
+     */
+    public static double scaleFor(Entity entity, EntityType<?> target) {
+        if (!(entity instanceof LivingEntity) || target == EntityType.PLAYER) return 1.0;
+        float tw = target.getWidth();
+        float th = target.getHeight();
+        if (tw <= 0 || th <= 0) return 1.0;
+        double ratio;
+        if (target == EntityType.ENDER_DRAGON) {
+            // le modèle du dragon de l'End est bien plus long que haut : on se base sur la hauteur
+            ratio = entity.getBbHeight() / th * 1.6;
+        } else {
+            ratio = Math.max(entity.getBbWidth() / tw, entity.getBbHeight() / th);
+        }
+        if (Math.abs(ratio - 1.0) < 0.15) return 1.0;
+        return Math.max(0.1, Math.min(10.0, ratio));
     }
 
     private static final java.util.Map<Class<?>, EntityType<?>> VANILLA = new java.util.HashMap<>();
@@ -162,6 +243,7 @@ public final class EntitySubstitutes {
      */
     public static int maxSharedDataId(Entity original, EntityType<?> substitute) {
         if (!(original instanceof LivingEntity)) return 7; // seulement les données communes à toutes les entités
+        if (substitute == EntityType.ENDER_DRAGON) return 14; // pas de données « Mob » utiles, et la phase du dragon (16) est à nous
         return substitute == EntityType.PLAYER ? 14 : 15;
     }
 }

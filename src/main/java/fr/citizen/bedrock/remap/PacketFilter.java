@@ -193,6 +193,8 @@ public final class PacketFilter {
             for (int id : remove.getEntityIds()) {
                 session.hiddenEntities.remove(id);
                 session.substitutedEntities.remove(id);
+                session.entityScales.remove(id);
+                session.flippedYaw.remove(id);
                 java.util.UUID profile = session.fakePlayers.remove(id);
                 if (profile != null) profiles.add(profile);
             }
@@ -205,6 +207,16 @@ public final class PacketFilter {
         Integer entityId = entityIdOf(packet);
         if (entityId != null && session.hiddenEntities.contains(entityId.intValue())) {
             return null;
+        }
+        if (entityId != null && session.flippedYaw.contains(entityId.intValue())) {
+            Packet<?> flipped = flipYaw(packet, entityId);
+            if (flipped != packet) return flipped;
+        }
+        if (packet instanceof ClientboundUpdateAttributesPacket attrs && session.entityScales.containsKey(attrs.getEntityId())) {
+            // le serveur renvoie la vraie taille (1) : on remet la nôtre juste après
+            double scale = session.entityScales.get(attrs.getEntityId());
+            runReentrant(() -> listener.send(packet));
+            return scalePacket(attrs.getEntityId(), scale);
         }
         if (packet instanceof ClientboundSetPassengersPacket passengers) {
             for (int id : passengers.getPassengers()) {
@@ -331,9 +343,17 @@ public final class PacketFilter {
             session.fakePlayers.put(add.getId(), add.getUUID());
             runReentrant(() -> listener.send(info));
         }
+        boolean flip = target == EntityType.ENDER_DRAGON;
+        if (flip) session.flippedYaw.add(add.getId());
         ClientboundAddEntityPacket replaced = new ClientboundAddEntityPacket(add.getId(), add.getUUID(), add.getX(), add.getY(), add.getZ(),
-                add.getXRot(), add.getYRot(), target, 0,
-                new net.minecraft.world.phys.Vec3(add.getXa(), add.getYa(), add.getZa()), add.getYHeadRot());
+                add.getXRot(), flip ? add.getYRot() + 180f : add.getYRot(), target, 0,
+                new net.minecraft.world.phys.Vec3(add.getXa(), add.getYa(), add.getZa()), flip ? add.getYHeadRot() + 180f : add.getYHeadRot());
+        double scale = EntitySubstitutes.scaleFor(entity, target);
+        if (scale != 1.0) {
+            session.entityScales.put(add.getId(), scale);
+            int scaledId = add.getId();
+            game.player.server.execute(() -> runReentrant(() -> listener.send(scalePacket(scaledId, scale))));
+        }
         String carcass = EntitySubstitutes.carcassLabel(entity);
         if (carcass != null) {
             // Nom visible au-dessus de la carcasse, envoyé juste après son apparition
@@ -344,6 +364,43 @@ public final class PacketFilter {
             game.player.server.execute(() -> runReentrant(() -> listener.send(label)));
         }
         return replaced;
+    }
+
+    /** Attribut de taille seul, pour agrandir / réduire une créature chez la console. */
+    private static ClientboundUpdateAttributesPacket scalePacket(int entityId, double scale) {
+        net.minecraft.world.entity.ai.attributes.AttributeInstance instance =
+                new net.minecraft.world.entity.ai.attributes.AttributeInstance(net.minecraft.world.entity.ai.attributes.Attributes.SCALE, a -> {
+                });
+        instance.setBaseValue(scale);
+        return new ClientboundUpdateAttributesPacket(entityId, List.of(instance));
+    }
+
+    /** Orientation retournée de 180° (créatures montrées en dragon de l'End). Nouveau paquet : l'original sert aussi aux joueurs PC. */
+    private static Packet<?> flipYaw(Packet<?> packet, int id) {
+        if (packet instanceof ClientboundMoveEntityPacket.Rot p) {
+            return new ClientboundMoveEntityPacket.Rot(id, (byte) (p.getyRot() + 128), p.getxRot(), p.isOnGround());
+        }
+        if (packet instanceof ClientboundMoveEntityPacket.PosRot p) {
+            return new ClientboundMoveEntityPacket.PosRot(id, p.getXa(), p.getYa(), p.getZa(), (byte) (p.getyRot() + 128), p.getxRot(), p.isOnGround());
+        }
+        if (packet instanceof ClientboundRotateHeadPacket p) {
+            net.minecraft.network.FriendlyByteBuf buf = new net.minecraft.network.FriendlyByteBuf(io.netty.buffer.Unpooled.buffer());
+            buf.writeVarInt(id);
+            buf.writeByte((byte) (p.getYHeadRot() + 128));
+            return ClientboundRotateHeadPacket.STREAM_CODEC.decode(buf);
+        }
+        if (packet instanceof ClientboundTeleportEntityPacket p) {
+            net.minecraft.network.FriendlyByteBuf buf = new net.minecraft.network.FriendlyByteBuf(io.netty.buffer.Unpooled.buffer());
+            buf.writeVarInt(id);
+            buf.writeDouble(p.getX());
+            buf.writeDouble(p.getY());
+            buf.writeDouble(p.getZ());
+            buf.writeByte((byte) (p.getyRot() + 128));
+            buf.writeByte(p.getxRot());
+            buf.writeBoolean(p.isOnGround());
+            return ClientboundTeleportEntityPacket.STREAM_CODEC.decode(buf);
+        }
+        return packet;
     }
 
     @Nullable
