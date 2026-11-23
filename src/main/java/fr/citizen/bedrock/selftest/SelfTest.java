@@ -153,6 +153,9 @@ public final class SelfTest {
         String encrypted = FloodgateCipher.encrypt(plain, FloodgateKey.get());
         BedrockData data = BedrockData.parse(FloodgateCipher.decrypt(encrypted, FloodgateKey.get()));
         check("Test Xbox".equals(data.username()) && "Xbox".equals(data.deviceName()), "déchiffrement des données console");
+        BedrockData maxXuid = BedrockData.parse(String.join("\\0", "1.21.50", "Test Xbox Max", "18446744073709551615", "11", "fr_FR", "0", "3", "127.0.0.1"));
+        check(new BedrockSession(maxXuid).profile().getId().getLeastSignificantBits() == -1L,
+                "prise en charge des XUID Xbox 64 bits non signés");
 
         // 3. Conversions avec une session console simulée
         BedrockSession fake = new BedrockSession(data);
