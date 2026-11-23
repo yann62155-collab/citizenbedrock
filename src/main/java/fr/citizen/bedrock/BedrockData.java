@@ -17,7 +17,7 @@ public record BedrockData(String version, String username, String xuid, int devi
         if (f.length < 8) {
             throw new IllegalArgumentException("Données Bedrock incomplètes (" + f.length + " champs)");
         }
-        Long.parseLong(f[2]); // le XUID doit être un nombre
+        Long.parseUnsignedLong(f[2]); // le XUID est un entier 64 bits non signé
         return new BedrockData(f[0], f[1], f[2], safeInt(f[3]), f[4], safeInt(f[5]), safeInt(f[6]), f[7]);
     }
 
