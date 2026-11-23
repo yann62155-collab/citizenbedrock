@@ -49,7 +49,7 @@ public final class BedrockSession {
 
     public BedrockSession(BedrockData data) {
         this.data = data;
-        this.profile = new GameProfile(new UUID(0L, Long.parseLong(data.xuid())), javaName(data.username()));
+        this.profile = new GameProfile(new UUID(0L, Long.parseUnsignedLong(data.xuid())), javaName(data.username()));
     }
 
     /** Pseudo Java : préfixe + gamertag sans espaces, 16 caractères maximum. */
