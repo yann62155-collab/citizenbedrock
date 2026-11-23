@@ -2,6 +2,7 @@ package fr.citizen.bedrock.command;
 
 import com.mojang.brigadier.CommandDispatcher;
 import fr.citizen.bedrock.BedrockConfig;
+import fr.citizen.bedrock.BedrockCompatibilityReport;
 import fr.citizen.bedrock.BedrockPlayers;
 import fr.citizen.bedrock.BedrockSession;
 import fr.citizen.bedrock.bridge.BridgeManager;
@@ -45,6 +46,16 @@ public final class BedrockCommand {
         dispatcher.register(Commands.literal("citizenbedrock")
                 .requires(source -> source.hasPermission(3))
                 .then(Commands.literal("statut").executes(ctx -> status(ctx.getSource())))
+                .then(Commands.literal("diagnostic").executes(ctx -> {
+                    var report = BedrockCompatibilityReport.generate();
+                    ctx.getSource().sendSuccess(() -> Component.literal("§6[Citizen Bedrock] §eAudit : §f" + report.mods() + " namespaces, "
+                            + report.blocks() + " blocs, " + report.blockStates() + " états, " + report.items() + " objets, "
+                            + report.entities() + " entités, " + report.dataComponents() + " composants."), false);
+                    ctx.getSource().sendSuccess(() -> Component.literal(report.file() == null
+                            ? "§cImpossible d'écrire compatibility-report.json."
+                            : "§eRapport : §f" + report.file()), false);
+                    return 1;
+                }))
                 .then(Commands.literal("relancer").executes(ctx -> {
                     ctx.getSource().sendSuccess(() -> Component.literal("§6[Citizen Bedrock] §eRelance du pont..."), true);
                     Thread t = new Thread(BridgeManager::restart, "CitizenBedrock-Relance");
