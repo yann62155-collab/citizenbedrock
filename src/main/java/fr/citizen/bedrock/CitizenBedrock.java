@@ -60,6 +60,7 @@ public final class CitizenBedrock {
 
     private void onServerStarted(ServerStartedEvent event) {
         RemapTables.build();
+        BedrockCompatibilityReport.generate();
         BridgeManager.start(event.getServer());
         fr.citizen.bedrock.web.WebServer.start();
         if (SelfTest.ENABLED) {
